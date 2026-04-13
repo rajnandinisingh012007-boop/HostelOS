@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostelOS — Admin Panel & Reports</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0f14; --surface:#13161d; --surface2:#1a1e28;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+    --text:#eef0f6; --muted:#7a7f90;
+    --accent:#6c63ff; --red:#ef4444; --green:#22c55e; --amber:#f59e0b; --blue:#3b82f6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { position:fixed; left:0; top:0; bottom:0; width:220px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; z-index:100; }
+  .logo { padding:22px 20px 18px; border-bottom:1px solid var(--border); }
+  .logo-mark { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; }
+  .logo-mark span { color:var(--accent); }
+  .logo-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .nav { padding:14px 10px; flex:1; overflow-y:auto; }
+  .nav-section { font-size:10px; font-weight:500; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:0 10px; margin:14px 0 5px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13.5px; color:var(--muted); transition:all 0.15s; margin-bottom:2px; text-decoration:none; }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:rgba(108,99,255,0.12); color:var(--accent); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; }
+  .nav-badge { margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-weight:600; padding:1px 6px; border-radius:20px; }
+  .sidebar-user { padding:14px 16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .avatar { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#a78bfa); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:#fff; flex-shrink:0; }
+  .user-name { font-size:13px; font-weight:500; }
+  .user-role { font-size:11px; color:var(--muted); }
+  .logout-btn { display:flex; align-items:center; gap:8px; padding:9px 10px 14px; cursor:pointer; font-size:13px; color:var(--muted); transition:all 0.15s; margin:0 10px; border-radius:8px; }
+  .logout-btn:hover { background:rgba(239,68,68,0.08); color:var(--red); }
+
+  /* ── MAIN ── */
+  .main { margin-left:220px; min-height:100vh; }
+  .topbar { padding:18px 30px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:50; }
+  .topbar h1 { font-family:'Syne',sans-serif; font-size:17px; font-weight:700; }
+  .topbar p { font-size:12px; color:var(--muted); margin-top:2px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .icon-btn { width:36px; height:36px; border-radius:9px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; transition:all 0.15s; }
+  .icon-btn:hover { border-color:var(--border2); }
+  .icon-btn svg { width:16px; height:16px; color:var(--muted); }
+  .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; background:var(--red); border-radius:50%; border:2px solid var(--surface); }
+  .role-badge { font-size:11px; font-weight:600; padding:4px 12px; border-radius:20px; background:rgba(108,99,255,0.12); color:var(--accent); border:1px solid rgba(108,99,255,0.25); }
+
+  .content { padding:26px 30px; }
+
+  /* ── STATS ── */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; position:relative; overflow:hidden; }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:14px 14px 0 0; }
+  .stat-card.blue::before   { background:var(--blue); }
+  .stat-card.green::before  { background:var(--green); }
+  .stat-card.amber::before  { background:var(--amber); }
+  .stat-card.purple::before { background:var(--accent); }
+  .stat-card.red::before    { background:var(--red); }
+  .stat-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+  .stat-icon svg { width:17px; height:17px; }
+  .stat-icon.blue   { background:rgba(59,130,246,0.1);  color:var(--blue); }
+  .stat-icon.green  { background:rgba(34,197,94,0.1);   color:var(--green); }
+  .stat-icon.amber  { background:rgba(245,158,11,0.1);  color:var(--amber); }
+  .stat-icon.purple { background:rgba(108,99,255,0.1);  color:var(--accent); }
+  .stat-icon.red    { background:rgba(239,68,68,0.1);   color:var(--red); }
+  .stat-label { font-size:12px; color:var(--muted); margin-bottom:3px; }
+  .stat-value { font-family:'Syne',sans-serif; font-size:26px; font-weight:700; line-height:1; }
+  .stat-sub   { font-size:11px; color:var(--muted); margin-top:4px; }
+  .stat-change { display:inline-flex; align-items:center; gap:3px; font-size:11px; margin-top:5px; padding:2px 7px; border-radius:20px; }
+  .stat-change.up   { background:rgba(34,197,94,0.08);  color:var(--green); }
+  .stat-change.down { background:rgba(239,68,68,0.08);  color:var(--red); }
+
+  /* ── CARDS ── */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .card-header { padding:16px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .card-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; }
+  .card-sub   { font-size:12px; color:var(--muted); margin-top:2px; }
+  .card-body  { padding:20px; }
+  .card-link  { font-size:12px; color:var(--accent); cursor:pointer; text-decoration:none; }
+
+  /* ── LAYOUT ── */
+  .two-col   { display:grid; grid-template-columns:1fr 1fr;   gap:18px; margin-bottom:20px; }
+  .three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:20px; }
+  .mb { margin-bottom:20px; }
+
+  /* ── REPORT SELECTOR ── */
+  .report-selector { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:26px; }
+  .report-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:18px 16px; cursor:pointer; transition:all 0.18s; text-align:center;
+  }
+  .report-card:hover { border-color:var(--border2); transform:translateY(-1px); }
+  .report-card.active { border-color:rgba(108,99,255,0.45); background:rgba(108,99,255,0.07); }
+  .report-card-icon { width:42px; height:42px; border-radius:11px; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+  .report-card-icon svg { width:20px; height:20px; }
+  .report-card-icon.blue   { background:rgba(59,130,246,0.1);  color:var(--blue); }
+  .report-card-icon.green  { background:rgba(34,197,94,0.1);   color:var(--green); }
+  .report-card-icon.amber  { background:rgba(245,158,11,0.1);  color:var(--amber); }
+  .report-card-icon.purple { background:rgba(108,99,255,0.1);  color:var(--accent); }
+  .report-card-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; margin-bottom:4px; }
+  .report-card.active .report-card-title { color:var(--accent); }
+  .report-card-desc { font-size:11px; color:var(--muted); line-height:1.4; }
+
+  /* ── REPORT PANEL ── */
+  .report-panel { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; margin-bottom:20px; }
+  .report-toolbar { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .report-toolbar label { font-size:12px; color:var(--muted); font-weight:500; }
+  .report-toolbar select, .report-toolbar input { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:13px; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.15s; }
+  .report-toolbar select:focus, .report-toolbar input:focus { border-color:rgba(108,99,255,0.4); }
+  .report-toolbar select option { background:var(--surface2); }
+  .btn-generate { padding:8px 20px; border-radius:9px; background:var(--accent); color:#fff; font-family:'Syne',sans-serif; font-size:13px; font-weight:700; border:none; cursor:pointer; transition:opacity 0.15s; display:flex; align-items:center; gap:7px; }
+  .btn-generate:hover { opacity:0.88; }
+  .btn-generate svg { width:14px; height:14px; }
+  .btn-export { padding:8px 16px; border-radius:9px; background:var(--surface2); border:1px solid var(--border2); color:var(--text); font-family:'Syne',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:7px; }
+  .btn-export:hover { border-color:rgba(108,99,255,0.4); color:var(--accent); }
+  .btn-export svg { width:14px; height:14px; }
+  .ml-auto { margin-left:auto; }
+  .export-group { display:flex; gap:8px; }
+
+  /* ── DATA TABLE ── */
+  .report-table-wrap { overflow-x:auto; }
+  .report-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .report-table th { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; padding:11px 16px; text-align:left; border-bottom:1px solid var(--border); background:var(--surface2); position:sticky; top:0; }
+  .report-table td { padding:11px 16px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .report-table tr:last-child td { border-bottom:none; }
+  .report-table tr:hover td { background:rgba(255,255,255,0.015); }
+  .flag-cell { display:flex; align-items:center; gap:6px; }
+  .flag-red    { color:var(--red);   font-weight:600; }
+  .flag-amber  { color:var(--amber); font-weight:600; }
+  .flag-green  { color:var(--green); }
+  .flag-muted  { color:var(--muted); }
+
+  /* status pills */
+  .pill { display:inline-flex; align-items:center; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; }
+  .pill.paid     { background:rgba(34,197,94,0.1);  color:var(--green); border:1px solid rgba(34,197,94,0.2); }
+  .pill.pending  { background:rgba(239,68,68,0.08); color:var(--red);   border:1px solid rgba(239,68,68,0.2); }
+  .pill.partial  { background:rgba(245,158,11,0.1); color:var(--amber); border:1px solid rgba(245,158,11,0.2); }
+  .pill.open     { background:rgba(245,158,11,0.1); color:var(--amber); border:1px solid rgba(245,158,11,0.2); }
+  .pill.resolved { background:rgba(34,197,94,0.1);  color:var(--green); border:1px solid rgba(34,197,94,0.2); }
+  .pill.escalated{ background:rgba(239,68,68,0.08); color:var(--red);   border:1px solid rgba(239,68,68,0.2); }
+  .pill.high     { background:rgba(239,68,68,0.08); color:var(--red);   border:1px solid rgba(239,68,68,0.2); }
+  .pill.medium   { background:rgba(245,158,11,0.1); color:var(--amber); border:1px solid rgba(245,158,11,0.2); }
+  .pill.low      { background:rgba(34,197,94,0.1);  color:var(--green); border:1px solid rgba(34,197,94,0.2); }
+
+  /* ── LEADERBOARD ── */
+  .lb-row { display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--surface2); border-radius:9px; margin-bottom:7px; border:1px solid var(--border); }
+  .lb-rank { font-family:'Syne',sans-serif; font-size:13px; font-weight:800; min-width:28px; }
+  .lb-rank.gold   { color:var(--amber); }
+  .lb-rank.silver { color:#94a3b8; }
+  .lb-rank.bronze { color:#b45309; }
+  .lb-avatar { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:11px; color:#fff; flex-shrink:0; }
+  .lb-info { flex:1; }
+  .lb-name { font-size:13px; font-weight:500; }
+  .lb-meta { font-size:11px; color:var(--muted); margin-top:1px; }
+  .lb-score { font-family:'Syne',sans-serif; font-weight:800; font-size:16px; }
+  .lb-bar-wrap { width:80px; }
+  .bar-track { height:6px; background:var(--surface); border-radius:999px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:999px; }
+
+  /* ── COMPLAINT ANALYTICS ── */
+  .analytics-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .analytics-row:last-child { border:none; }
+  .cat-pill { font-size:10px; font-weight:600; padding:3px 9px; border-radius:20px; min-width:80px; text-align:center; }
+  .cat-wash { background:rgba(59,130,246,0.1); color:var(--blue); }
+  .cat-mess { background:rgba(245,158,11,0.1); color:var(--amber); }
+  .cat-room { background:rgba(108,99,255,0.1); color:var(--accent); }
+  .cat-other{ background:rgba(34,197,94,0.1);  color:var(--green); }
+  .analytics-bar-wrap { flex:1; }
+  .analytics-count { font-family:'Syne',sans-serif; font-weight:700; font-size:14px; min-width:30px; text-align:right; }
+  .analytics-trend { font-size:11px; min-width:70px; text-align:right; }
+  .trend-up   { color:var(--red); }
+  .trend-down { color:var(--green); }
+
+  /* ── SUMMARY ROWS ── */
+  .summary-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .summary-row:last-child { border:none; }
+  .summary-key { color:var(--muted); }
+  .summary-val { font-weight:500; }
+
+  /* ── REPORT HISTORY ── */
+  .hist-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .hist-row:last-child { border:none; }
+  .hist-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .hist-icon svg { width:15px; height:15px; }
+  .hist-icon.blue   { background:rgba(59,130,246,0.1);  color:var(--blue); }
+  .hist-icon.green  { background:rgba(34,197,94,0.1);   color:var(--green); }
+  .hist-icon.amber  { background:rgba(245,158,11,0.1);  color:var(--amber); }
+  .hist-icon.purple { background:rgba(108,99,255,0.1);  color:var(--accent); }
+  .hist-info { flex:1; }
+  .hist-title { font-weight:500; }
+  .hist-meta  { font-size:11px; color:var(--muted); margin-top:1px; }
+  .hist-dl { display:flex; gap:6px; }
+  .dl-btn { padding:5px 11px; border-radius:7px; font-size:11px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--surface2); color:var(--muted); transition:all 0.15s; }
+  .dl-btn:hover { border-color:var(--border2); color:var(--text); }
+
+  /* ── EMPTY / LOADING ── */
+  .empty { text-align:center; padding:50px 20px; }
+  .empty svg { width:36px; height:36px; color:var(--muted); margin-bottom:10px; opacity:0.4; }
+  .empty p { font-size:13px; color:var(--muted); }
+
+  .spinner-wrap { display:flex; align-items:center; justify-content:center; padding:50px; gap:12px; }
+  .spinner { width:20px; height:20px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* ── TOAST ── */
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--surface); border:1px solid var(--border2); border-radius:10px; padding:12px 20px; font-size:13px; z-index:500; transition:transform 0.3s ease; white-space:nowrap; box-shadow:0 8px 30px rgba(0,0,0,0.4); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .toast.success { border-color:rgba(34,197,94,0.3); color:var(--green); }
+  .toast.info    { border-color:rgba(108,99,255,0.3); color:var(--accent); }
+
+  /* ── MISC ── */
+  .section-label { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:0 0 14px; display:flex; align-items:center; gap:8px; }
+  .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+  .divider { height:1px; background:var(--border); margin:16px 0; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">Hostel<span>OS</span></div>
+    <div class="logo-sub">Admin Panel</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Overview</div>
+    <a class="nav-item" href="dashboard-admin.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">Manage</div>
+    <a class="nav-item" href="#">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Students
+    </a>
+    <a class="nav-item" href="rooms.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      Rooms &amp; Inventory
+    </a>
+    <a class="nav-item" href="#">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+      Fee Management
+    </a>
+    <a class="nav-item" href="complaints.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      Complaints
+      <span class="nav-badge">14</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      Leave Approvals
+    </a>
+    <div class="nav-section">Reports</div>
+    <a class="nav-item active" href="#">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Reports &amp; Export
+    </a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="avatar">RG</div>
+    <div>
+      <div class="user-name">Mr. R. Gupta</div>
+      <div class="user-role">Hostel Admin</div>
+    </div>
+  </div>
+  <div class="logout-btn" onclick="logout()">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    Logout
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>Admin Panel &amp; Reports</h1>
+      <p>Full hostel overview · Generate, view &amp; export all reports</p>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <div class="notif-dot"></div>
+      </div>
+      <span class="role-badge">Admin</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── OVERVIEW STATS ── -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-icon blue"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+        <div class="stat-label">Total Students</div>
+        <div class="stat-value" style="color:var(--blue)">248</div>
+        <div class="stat-sub">across 3 blocks</div>
+        <div class="stat-change up">↑ 12 new this month</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon green"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg></div>
+        <div class="stat-label">Fees Collected</div>
+        <div class="stat-value" style="color:var(--green)">₹42L</div>
+        <div class="stat-sub">94% of total — 233/248 paid</div>
+        <div class="stat-change up">₹2.77L pending</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-icon amber"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+        <div class="stat-label">Avg Attendance</div>
+        <div class="stat-value" style="color:var(--amber)">84%</div>
+        <div class="stat-sub">This month overall</div>
+        <div class="stat-change down">18 below 75%</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon purple"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg></div>
+        <div class="stat-label">Avg Hostel Score</div>
+        <div class="stat-value" style="color:var(--accent)">8.2</div>
+        <div class="stat-sub">out of 10 — all students</div>
+        <div class="stat-change up">↑ 0.3 vs last month</div>
+      </div>
+    </div>
+
+    <!-- ── REPORT TYPE SELECTOR ── -->
+    <div class="section-label">Generate a Report</div>
+    <div class="report-selector">
+      <div class="report-card active" onclick="selectReport('attendance',this)">
+        <div class="report-card-icon blue"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+        <div class="report-card-title">Attendance</div>
+        <div class="report-card-desc">Month-wise per student. Flag below 75%.</div>
+      </div>
+      <div class="report-card" onclick="selectReport('fees',this)">
+        <div class="report-card-icon green"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg></div>
+        <div class="report-card-title">Fee Collection</div>
+        <div class="report-card-desc">Paid, pending, defaulters list.</div>
+      </div>
+      <div class="report-card" onclick="selectReport('complaints',this)">
+        <div class="report-card-icon amber"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
+        <div class="report-card-title">Complaint Analytics</div>
+        <div class="report-card-desc">By category, trend, escalations.</div>
+      </div>
+      <div class="report-card" onclick="selectReport('leaderboard',this)">
+        <div class="report-card-icon purple"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg></div>
+        <div class="report-card-title">Rating Leaderboard</div>
+        <div class="report-card-desc">Top 10 students by hostel score.</div>
+      </div>
+    </div>
+
+    <!-- ── REPORT PANEL ── -->
+    <div class="report-panel mb">
+      <div class="report-toolbar">
+        <label>Month</label>
+        <select id="filterMonth">
+          <option value="4">April 2026</option>
+          <option value="3">March 2026</option>
+          <option value="2">February 2026</option>
+          <option value="1">January 2026</option>
+        </select>
+        <label>Block</label>
+        <select id="filterBlock">
+          <option value="all">All Blocks</option>
+          <option value="A">Block A</option>
+          <option value="B">Block B</option>
+          <option value="C">Block C</option>
+        </select>
+        <button class="btn-generate" onclick="generateReport()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Generate
+        </button>
+        <div class="export-group ml-auto">
+          <button class="btn-export" onclick="exportCSV()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            CSV
+          </button>
+          <button class="btn-export" onclick="exportPDF()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            PDF
+          </button>
+        </div>
+      </div>
+      <div id="reportContent"></div>
+    </div>
+
+    <!-- ── BOTTOM ROW ── -->
+    <div class="two-col">
+      <!-- Complaint Analytics Summary -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Complaint Analytics — April 2026</div>
+            <div class="card-sub">3-month trend · escalations flagged</div>
+          </div>
+          <a class="card-link" href="complaints.html">View all →</a>
+        </div>
+        <div class="card-body">
+          <div id="complaintAnalytics"></div>
+          <div style="margin-top:14px;padding:10px 14px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.18);border-radius:9px;font-size:12px;color:#fca5a5;line-height:1.5">
+            ⚡ <strong>Washroom</strong> and <strong>Mess</strong> complaints reported by 3+ different students — AI auto-escalated for immediate action.
+          </div>
+        </div>
+      </div>
+
+      <!-- Report History -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Recent Report Exports</div>
+          <div class="card-sub">Last 5 generated reports</div>
+        </div>
+        <div class="card-body" id="reportHistory"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+let currentReportType = 'attendance';
+
+const attendanceData = [
+  {id:'STU001',name:'Arjun Mehta',      room:101,block:'A',pct:92,score:9.2},
+  {id:'STU002',name:'Ravi Kumar',       room:102,block:'A',pct:88,score:8.8},
+  {id:'STU003',name:'Neha Singh',       room:103,block:'A',pct:74,score:6.9},
+  {id:'STU004',name:'Karan Patel',      room:104,block:'B',pct:95,score:9.5},
+  {id:'STU005',name:'Meera Joshi',      room:105,block:'B',pct:67,score:6.1},
+  {id:'STU006',name:'Suresh Rao',       room:201,block:'A',pct:81,score:8.1},
+  {id:'STU007',name:'Anjali Nair',      room:202,block:'C',pct:90,score:9.0},
+  {id:'STU008',name:'Vikram Iyer',      room:203,block:'B',pct:72,score:7.2},
+  {id:'STU009',name:'Pooja Sharma',     room:205,block:'C',pct:85,score:8.5},
+  {id:'STU010',name:'Deepak Gupta',     room:207,block:'A',pct:60,score:5.8},
+  {id:'STU011',name:'Rahul Das',        room:301,block:'B',pct:93,score:9.3},
+  {id:'STU012',name:'Sanya Kapoor',     room:303,block:'C',pct:78,score:7.8},
+  {id:'STU013',name:'Amit Yadav',       room:305,block:'A',pct:55,score:5.2},
+  {id:'STU014',name:'Divya Menon',      room:307,block:'B',pct:89,score:8.9},
+  {id:'STU015',name:'Rohit Bansal',     room:308,block:'C',pct:96,score:9.6},
+  {id:'STU016',name:'Priya Tiwari',     room:310,block:'A',pct:70,score:7.0},
+  {id:'STU017',name:'Varun Saxena',     room:401,block:'B',pct:83,score:8.3},
+  {id:'STU018',name:'Nisha Reddy',      room:402,block:'C',pct:91,score:9.1},
+  {id:'STU019',name:'Mohit Jain',       room:403,block:'A',pct:77,score:7.7},
+  {id:'STU020',name:'Shreya Mishra',    room:404,block:'B',pct:62,score:6.2},
+];
+
+const feeData = [
+  {id:'STU001',name:'Arjun Mehta',      room:101,block:'A',amount:18050,paid:18050,status:'paid'},
+  {id:'STU002',name:'Ravi Kumar',       room:102,block:'A',amount:18050,paid:18050,status:'paid'},
+  {id:'STU003',name:'Neha Singh',       room:103,block:'A',amount:18050,paid:9000, status:'partial'},
+  {id:'STU004',name:'Karan Patel',      room:104,block:'B',amount:18050,paid:18050,status:'paid'},
+  {id:'STU005',name:'Meera Joshi',      room:105,block:'B',amount:18050,paid:0,    status:'pending'},
+  {id:'STU006',name:'Suresh Rao',       room:201,block:'A',amount:18050,paid:18050,status:'paid'},
+  {id:'STU007',name:'Anjali Nair',      room:202,block:'C',amount:18050,paid:18050,status:'paid'},
+  {id:'STU008',name:'Vikram Iyer',      room:203,block:'B',amount:18050,paid:18050,status:'paid'},
+  {id:'STU009',name:'Pooja Sharma',     room:205,block:'C',amount:18050,paid:0,    status:'pending'},
+  {id:'STU010',name:'Deepak Gupta',     room:207,block:'A',amount:18050,paid:10000,status:'partial'},
+  {id:'STU011',name:'Rahul Das',        room:301,block:'B',amount:18050,paid:18050,status:'paid'},
+  {id:'STU012',name:'Sanya Kapoor',     room:303,block:'C',amount:18050,paid:18050,status:'paid'},
+  {id:'STU013',name:'Amit Yadav',       room:305,block:'A',amount:18050,paid:0,    status:'pending'},
+  {id:'STU014',name:'Divya Menon',      room:307,block:'B',amount:18050,paid:18050,status:'paid'},
+  {id:'STU015',name:'Rohit Bansal',     room:308,block:'C',amount:18050,paid:18050,status:'paid'},
+  {id:'STU016',name:'Priya Tiwari',     room:310,block:'A',amount:18050,paid:0,    status:'pending'},
+  {id:'STU017',name:'Varun Saxena',     room:401,block:'B',amount:18050,paid:18050,status:'paid'},
+  {id:'STU018',name:'Nisha Reddy',      room:402,block:'C',amount:18050,paid:18050,status:'paid'},
+  {id:'STU019',name:'Mohit Jain',       room:403,block:'A',amount:18050,paid:18050,status:'paid'},
+  {id:'STU020',name:'Shreya Mishra',    room:404,block:'B',amount:18050,paid:0,    status:'pending'},
+];
+
+const complaintData = [
+  {id:'CMP001',student:'STU003 — Neha Singh',  category:'washroom',desc:'Washroom not cleaned for 3 days',   status:'escalated',date:'Apr 10'},
+  {id:'CMP002',student:'STU005 — Meera Joshi', category:'mess',     desc:'Food quality very poor this week', status:'open',     date:'Apr 11'},
+  {id:'CMP003',student:'STU010 — Deepak Gupta',category:'room',     desc:'Light not working in room 207',    status:'resolved', date:'Apr 08'},
+  {id:'CMP004',student:'STU013 — Amit Yadav',  category:'washroom', desc:'Drain blocked on floor 3',         status:'escalated',date:'Apr 09'},
+  {id:'CMP005',student:'STU020 — Shreya Mishra',category:'mess',    desc:'Rotten vegetables served at dinner',status:'open',    date:'Apr 12'},
+  {id:'CMP006',student:'STU016 — Priya Tiwari',category:'other',    desc:'Wi-Fi dead in Block A corridor',   status:'open',     date:'Apr 11'},
+  {id:'CMP007',student:'STU002 — Ravi Kumar',  category:'washroom', desc:'Hot water not available mornings',  status:'open',    date:'Apr 12'},
+  {id:'CMP008',student:'STU008 — Vikram Iyer', category:'room',     desc:'Cupboard door hinge broken',       status:'resolved', date:'Apr 07'},
+];
+
+const leaderboardData = [
+  {rank:1, name:'Rohit Bansal',    room:308, block:'C', score:9.6, attendance:96, color:'#3b82f6'},
+  {rank:2, name:'Karan Patel',     room:104, block:'B', score:9.5, attendance:95, color:'#6c63ff'},
+  {rank:3, name:'Rahul Das',       room:301, block:'B', score:9.3, attendance:93, color:'#22c55e'},
+  {rank:4, name:'Arjun Mehta',     room:101, block:'A', score:9.2, attendance:92, color:'#f59e0b'},
+  {rank:5, name:'Nisha Reddy',     room:402, block:'C', score:9.1, attendance:91, color:'#ef4444'},
+  {rank:6, name:'Anjali Nair',     room:202, block:'C', score:9.0, attendance:90, color:'#8b5cf6'},
+  {rank:7, name:'Divya Menon',     room:307, block:'B', score:8.9, attendance:89, color:'#06b6d4'},
+  {rank:8, name:'Ravi Kumar',      room:102, block:'A', score:8.8, attendance:88, color:'#10b981'},
+  {rank:9, name:'Pooja Sharma',    room:205, block:'C', score:8.5, attendance:85, color:'#f97316'},
+  {rank:10,name:'Varun Saxena',    room:401, block:'B', score:8.3, attendance:83, color:'#ec4899'},
+];
+
+const reportHistory = [
+  {type:'attendance',label:'Attendance Report — March 2026',date:'Apr 1, 2026',color:'blue'},
+  {type:'fees',      label:'Fee Collection — Q1 2026',      date:'Apr 1, 2026',color:'green'},
+  {type:'complaints',label:'Complaint Analytics — March 2026',date:'Mar 31, 2026',color:'amber'},
+  {type:'leaderboard',label:'Rating Leaderboard — March 2026',date:'Mar 31, 2026',color:'purple'},
+  {type:'attendance',label:'Attendance Report — February 2026',date:'Mar 1, 2026',color:'blue'},
+];
+
+// ══════════════════════════════════════════
+// REPORT TYPE SELECTOR
+// ══════════════════════════════════════════
+function selectReport(type, el) {
+  currentReportType = type;
+  document.querySelectorAll('.report-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  generateReport();
+}
+
+// ══════════════════════════════════════════
+// GENERATE
+// ══════════════════════════════════════════
+function generateReport() {
+  const panel = document.getElementById('reportContent');
+  panel.innerHTML = `<div class="spinner-wrap"><div class="spinner"></div><span style="font-size:13px;color:var(--muted)">Generating report…</span></div>`;
+  setTimeout(() => {
+    if (currentReportType === 'attendance')  renderAttendance(panel);
+    if (currentReportType === 'fees')        renderFees(panel);
+    if (currentReportType === 'complaints')  renderComplaints(panel);
+    if (currentReportType === 'leaderboard') renderLeaderboard(panel);
+  }, 600);
+}
+
+// ── ATTENDANCE ──
+function renderAttendance(panel) {
+  const block = document.getElementById('filterBlock').value;
+  let data = block === 'all' ? attendanceData : attendanceData.filter(s => s.block === block);
+  const belowCount = data.filter(s => s.pct < 75).length;
+  panel.innerHTML = `
+    <div style="padding:14px 20px 0;display:flex;gap:12px;flex-wrap:wrap">
+      <div style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.15);border-radius:9px;padding:10px 16px;font-size:12px">
+        <span style="color:var(--muted)">Total records</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--blue);margin-left:10px">${data.length}</span>
+      </div>
+      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.15);border-radius:9px;padding:10px 16px;font-size:12px">
+        <span style="color:var(--muted)">Above 75%</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--green);margin-left:10px">${data.length - belowCount}</span>
+      </div>
+      <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.15);border-radius:9px;padding:10px 16px;font-size:12px">
+        <span style="color:var(--muted)">Below 75% ⚠</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--red);margin-left:10px">${belowCount}</span>
+      </div>
+    </div>
+    <div class="report-table-wrap" style="margin-top:14px">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Student ID</th><th>Name</th><th>Room</th><th>Block</th>
+            <th>Attendance %</th><th>Score</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(s => {
+            const flag = s.pct < 75 ? `<span class="flag-red">⚠ Below 75%</span>` : `<span class="flag-green">✓ Good</span>`;
+            const barColor = s.pct >= 75 ? 'var(--green)' : 'var(--red)';
+            return `<tr>
+              <td style="color:var(--muted);font-size:12px">${s.id}</td>
+              <td style="font-weight:500">${s.name}</td>
+              <td>${s.room}</td>
+              <td><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--surface2);color:var(--muted)">Block ${s.block}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="flex:1;max-width:80px"><div class="bar-track"><div class="bar-fill" style="width:${s.pct}%;background:${barColor}"></div></div></div>
+                  <span style="font-weight:600;font-size:13px;color:${barColor}">${s.pct}%</span>
+                </div>
+              </td>
+              <td style="font-family:'Syne',sans-serif;font-weight:700">${s.score}</td>
+              <td>${flag}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ── FEES ──
+function renderFees(panel) {
+  const block = document.getElementById('filterBlock').value;
+  let data = block === 'all' ? feeData : feeData.filter(s => s.block === block);
+  const paid = data.filter(s=>s.status==='paid').length;
+  const pending = data.filter(s=>s.status==='pending').length;
+  const partial = data.filter(s=>s.status==='partial').length;
+  const totalCollected = data.reduce((a,s)=>a+s.paid,0);
+  const totalDue = data.reduce((a,s)=>a+s.amount,0);
+  panel.innerHTML = `
+    <div style="padding:14px 20px 0;display:flex;gap:12px;flex-wrap:wrap">
+      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.15);border-radius:9px;padding:10px 16px;font-size:12px">
+        <span style="color:var(--muted)">Collected</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--green);margin-left:10px">₹${(totalCollected/100000).toFixed(2)}L</span>
+      </div>
+      <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.15);border-radius:9px;padding:10px 16px;font-size:12px">
+        <span style="color:var(--muted)">Pending</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--red);margin-left:10px">${pending + partial} students</span>
+      </div>
+      <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);border-radius:9px;padding:10px 16px;font-size:12px">
+        <span style="color:var(--muted)">Fully Paid</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--amber);margin-left:10px">${paid}/${data.length}</span>
+      </div>
+    </div>
+    <div class="report-table-wrap" style="margin-top:14px">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Student ID</th><th>Name</th><th>Room</th><th>Block</th>
+            <th>Total Due</th><th>Paid</th><th>Balance</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(s => `<tr>
+            <td style="color:var(--muted);font-size:12px">${s.id}</td>
+            <td style="font-weight:500">${s.name}</td>
+            <td>${s.room}</td>
+            <td><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--surface2);color:var(--muted)">Block ${s.block}</span></td>
+            <td>₹${s.amount.toLocaleString()}</td>
+            <td style="color:var(--green)">₹${s.paid.toLocaleString()}</td>
+            <td style="color:${s.amount-s.paid>0?'var(--red)':'var(--green)'}">₹${(s.amount-s.paid).toLocaleString()}</td>
+            <td><span class="pill ${s.status}">${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ── COMPLAINTS ──
+function renderComplaints(panel) {
+  const cats = {washroom:0,mess:0,room:0,other:0};
+  complaintData.forEach(c => cats[c.category]++);
+  panel.innerHTML = `
+    <div style="padding:20px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">Category Breakdown</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        ${[
+          {key:'washroom',label:'Washroom',color:'var(--blue)',  cls:'cat-wash'},
+          {key:'mess',    label:'Mess/Food',color:'var(--amber)', cls:'cat-mess'},
+          {key:'room',    label:'Room Issues',color:'var(--accent)',cls:'cat-room'},
+          {key:'other',   label:'Other',    color:'var(--green)', cls:'cat-other'},
+        ].map(c=>`
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+              <span class="cat-pill ${c.cls}">${c.label}</span>
+              <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:${c.color}">${cats[c.key]}</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:${cats[c.key]/complaintData.length*100}%;background:${c.color}"></div></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="report-table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr><th>ID</th><th>Student</th><th>Category</th><th>Description</th><th>Date</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          ${complaintData.map(c=>`<tr>
+            <td style="color:var(--muted);font-size:11px">${c.id}</td>
+            <td style="font-size:12px">${c.student}</td>
+            <td><span class="cat-pill ${c.category==='washroom'?'cat-wash':c.category==='mess'?'cat-mess':c.category==='room'?'cat-room':'cat-other'}">${c.category}</span></td>
+            <td style="max-width:220px;font-size:12px;color:var(--muted)">${c.desc}</td>
+            <td style="font-size:12px;color:var(--muted)">${c.date}</td>
+            <td><span class="pill ${c.status}">${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ── LEADERBOARD ──
+function renderLeaderboard(panel) {
+  const rankClass = r => r===1?'gold':r===2?'silver':r===3?'bronze':'';
+  panel.innerHTML = `<div style="padding:20px">
+    <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">Top 10 Students — April 2026</div>
+    ${leaderboardData.map(s=>`
+      <div class="lb-row" style="${s.rank<=3?'border-color:rgba(108,99,255,0.2);background:rgba(108,99,255,0.05)':''}">
+        <div class="lb-rank ${rankClass(s.rank)}">#${s.rank}</div>
+        <div class="lb-avatar" style="background:linear-gradient(135deg,${s.color},${s.color}99)">${s.name.split(' ').map(w=>w[0]).join('')}</div>
+        <div class="lb-info">
+          <div class="lb-name">${s.name}</div>
+          <div class="lb-meta">Room ${s.room} · Block ${s.block} · Attendance ${s.attendance}%</div>
+        </div>
+        <div class="lb-bar-wrap">
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${s.score*10}%;background:${s.score>=9?'var(--green)':s.score>=8?'var(--blue)':'var(--amber)'}"></div>
+          </div>
+        </div>
+        <div class="lb-score" style="color:${s.score>=9?'var(--green)':s.score>=8?'var(--blue)':'var(--amber)'}">${s.score}</div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+// COMPLAINT ANALYTICS WIDGET
+// ══════════════════════════════════════════
+function renderComplaintAnalytics() {
+  const el = document.getElementById('complaintAnalytics');
+  const items = [
+    {label:'Washroom', cls:'cat-wash', count:7, trend:'+3 vs last month', up:true},
+    {label:'Mess/Food',cls:'cat-mess', count:5, trend:'+2 vs last month', up:true},
+    {label:'Room',     cls:'cat-room', count:3, trend:'-1 vs last month', up:false},
+    {label:'Other',    cls:'cat-other',count:2, trend:'same as last month',up:false},
+  ];
+  const max = 7;
+  el.innerHTML = items.map(i=>`
+    <div class="analytics-row">
+      <span class="cat-pill ${i.cls}">${i.label}</span>
+      <div class="analytics-bar-wrap">
+        <div class="bar-track"><div class="bar-fill" style="width:${i.count/max*100}%;background:${i.cls==='cat-wash'?'var(--blue)':i.cls==='cat-mess'?'var(--amber)':i.cls==='cat-room'?'var(--accent)':'var(--green)'}"></div></div>
+      </div>
+      <div class="analytics-count">${i.count}</div>
+      <div class="analytics-trend ${i.up?'trend-up':'trend-down'}">${i.trend}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+// REPORT HISTORY
+// ══════════════════════════════════════════
+function renderReportHistory() {
+  const el = document.getElementById('reportHistory');
+  const icons = {
+    attendance: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>`,
+    fees:       `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>`,
+    complaints: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`,
+    leaderboard:`<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>`,
+  };
+  el.innerHTML = reportHistory.map(r=>`
+    <div class="hist-row">
+      <div class="hist-icon ${r.color}">${icons[r.type]}</div>
+      <div class="hist-info">
+        <div class="hist-title">${r.label}</div>
+        <div class="hist-meta">Generated ${r.date}</div>
+      </div>
+      <div class="hist-dl">
+        <button class="dl-btn" onclick="showToast('Downloading CSV…','info')">CSV</button>
+        <button class="dl-btn" onclick="showToast('Downloading PDF…','info')">PDF</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+// EXPORT HANDLERS
+// ══════════════════════════════════════════
+function exportCSV() {
+  showToast(`${currentReportType.charAt(0).toUpperCase()+currentReportType.slice(1)} report exported as CSV`, 'success');
+}
+function exportPDF() {
+  showToast(`${currentReportType.charAt(0).toUpperCase()+currentReportType.slice(1)} report exported as PDF`, 'success');
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+generateReport();
+renderComplaintAnalytics();
+renderReportHistory();
+</script>
+</body>
+</html>

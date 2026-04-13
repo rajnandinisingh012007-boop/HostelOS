@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostelOS — Leave Application</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0f14; --surface:#13161d; --surface2:#1a1e28;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+    --text:#eef0f6; --muted:#7a7f90;
+    --accent:#6c63ff; --red:#ef4444; --green:#22c55e; --amber:#f59e0b; --blue:#3b82f6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image:linear-gradient(rgba(108,99,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(108,99,255,0.02) 1px,transparent 1px);
+    background-size:40px 40px; pointer-events:none;
+  }
+
+  /* SIDEBAR */
+  .sidebar { position:fixed; left:0; top:0; bottom:0; width:220px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; z-index:100; }
+  .logo { padding:22px 20px 18px; border-bottom:1px solid var(--border); }
+  .logo-mark { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; }
+  .logo-mark span { color:var(--accent); }
+  .logo-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .nav { padding:14px 10px; flex:1; }
+  .nav-section { font-size:10px; font-weight:500; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:0 10px; margin:14px 0 5px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13.5px; color:var(--muted); transition:all 0.15s; margin-bottom:2px; text-decoration:none; }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:rgba(59,130,246,0.12); color:var(--blue); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; }
+  .nav-badge { margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-weight:600; padding:1px 6px; border-radius:20px; }
+  .sidebar-user { padding:14px 16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .avatar { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--blue),#60a5fa); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:#fff; flex-shrink:0; }
+  .user-name { font-size:13px; font-weight:500; }
+  .user-role { font-size:11px; color:var(--muted); }
+  .logout-btn { display:flex; align-items:center; gap:8px; padding:9px 18px; cursor:pointer; font-size:13px; color:var(--muted); transition:all 0.15s; border-top:1px solid var(--border); }
+  .logout-btn:hover { color:var(--red); }
+
+  /* MAIN */
+  .main { margin-left:220px; min-height:100vh; }
+  .topbar { padding:18px 30px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:50; }
+  .topbar h1 { font-family:'Syne',sans-serif; font-size:17px; font-weight:700; }
+  .topbar p { font-size:12px; color:var(--muted); margin-top:2px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .role-badge { font-size:11px; font-weight:600; padding:4px 12px; border-radius:20px; background:rgba(59,130,246,0.12); color:var(--blue); border:1px solid rgba(59,130,246,0.25); }
+  .icon-btn { width:36px; height:36px; border-radius:9px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
+  .icon-btn svg { width:16px; height:16px; color:var(--muted); }
+  .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; background:var(--red); border-radius:50%; border:2px solid var(--surface); }
+
+  .content { padding:26px 30px; max-width:1100px; }
+
+  /* POINTS BANNER */
+  .points-banner { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+  .pts-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; position:relative; overflow:hidden; }
+  .pts-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .pts-card.blue::before { background:var(--blue); }
+  .pts-card.red::before { background:var(--red); }
+  .pts-card.amber::before { background:var(--amber); }
+  .pts-card.green::before { background:var(--green); }
+  .pts-label { font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .pts-val { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; }
+  .pts-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+
+  /* SCORE BAR */
+  .score-bar-wrap { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 22px; margin-bottom:24px; }
+  .score-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .score-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
+  .score-num { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:var(--blue); }
+  .bar-track { height:8px; background:var(--surface2); border-radius:999px; overflow:hidden; margin-bottom:10px; }
+  .bar-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--blue),#60a5fa); transition:width 0.5s; }
+  .deduction-pills { display:flex; gap:8px; flex-wrap:wrap; }
+  .pill { font-size:11px; padding:3px 10px; border-radius:20px; font-weight:500; }
+  .pill.red { background:rgba(239,68,68,0.1); color:var(--red); border:1px solid rgba(239,68,68,0.2); }
+  .pill.amber { background:rgba(245,158,11,0.1); color:var(--amber); border:1px solid rgba(245,158,11,0.2); }
+  .pill.blue { background:rgba(59,130,246,0.1); color:var(--blue); border:1px solid rgba(59,130,246,0.2); }
+
+  /* TABS */
+  .tab-bar { display:flex; gap:6px; margin-bottom:22px; border-bottom:1px solid var(--border); padding-bottom:0; }
+  .tab { font-size:13px; font-weight:500; padding:9px 16px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; transition:all 0.15s; }
+  .tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+  .tab:hover:not(.active) { color:var(--text); }
+
+  /* TWO-COL LAYOUT */
+  .two-col { display:grid; grid-template-columns:420px 1fr; gap:20px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px; }
+  .card-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; margin-bottom:4px; }
+  .card-sub { font-size:12px; color:var(--muted); margin-bottom:20px; }
+
+  /* FORM */
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:12px; color:var(--muted); margin-bottom:7px; font-weight:500; letter-spacing:0.2px; }
+  .field input, .field select, .field textarea {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:11px 14px; font-size:14px; color:var(--text);
+    font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color:rgba(59,130,246,0.5); }
+  .field input::placeholder, .field textarea::placeholder { color:var(--muted); }
+  .field select option { background:#1a1e28; }
+  .field textarea { resize:none; height:80px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .days-preview { display:flex; align-items:center; gap:8px; margin-top:8px; padding:8px 12px; background:var(--surface2); border-radius:8px; border:1px solid var(--border); }
+  .days-num { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--amber); }
+  .days-info { font-size:12px; color:var(--muted); }
+  .days-deduct { font-size:11px; color:var(--red); margin-top:1px; }
+
+  .info-box { padding:10px 12px; border-radius:9px; font-size:12px; margin-bottom:16px; line-height:1.6; }
+  .info-box.amber { background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.2); color:#fcd34d; }
+  .info-box.blue { background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2); color:#93c5fd; }
+
+  .btn-submit { width:100%; padding:13px; border-radius:11px; background:var(--blue); color:#fff; font-family:'Syne',sans-serif; font-size:15px; font-weight:700; border:none; cursor:pointer; transition:opacity 0.15s,transform 0.1s; letter-spacing:0.3px; margin-top:6px; }
+  .btn-submit:hover { opacity:0.9; }
+  .btn-submit:active { transform:scale(0.98); }
+
+  /* HISTORY */
+  .history-filters { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .filter-btn { font-size:12px; padding:5px 14px; border-radius:7px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); cursor:pointer; transition:all 0.15s; }
+  .filter-btn.active { border-color:rgba(59,130,246,0.35); background:rgba(59,130,246,0.08); color:var(--blue); }
+  .filter-btn:hover:not(.active) { border-color:var(--border2); color:var(--text); }
+
+  .leave-table { width:100%; border-collapse:collapse; }
+  .leave-table th { font-size:11px; color:var(--muted); font-weight:500; text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); letter-spacing:0.3px; text-transform:uppercase; }
+  .leave-table td { font-size:13px; padding:11px 12px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .leave-table tr:last-child td { border-bottom:none; }
+  .leave-table tr:hover td { background:rgba(255,255,255,0.015); }
+
+  .status-badge { font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; display:inline-block; }
+  .status-badge.approved { background:rgba(34,197,94,0.1); color:var(--green); }
+  .status-badge.pending { background:rgba(245,158,11,0.1); color:var(--amber); }
+  .status-badge.rejected { background:rgba(239,68,68,0.1); color:var(--red); }
+
+  .pts-chip { font-size:11px; font-weight:500; }
+  .pts-chip.neg { color:var(--red); }
+  .pts-chip.zero { color:var(--muted); }
+
+  .warden-note { font-size:11px; color:var(--muted); font-style:italic; }
+
+  /* SUCCESS TOAST */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--green); color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:500; opacity:0; transform:translateY(10px); transition:all 0.3s; z-index:999; pointer-events:none; }
+  .toast.show { opacity:1; transform:translateY(0); }
+
+  /* DEDUCTION BREAKDOWN */
+  .breakdown-list { display:flex; flex-direction:column; gap:8px; }
+  .breakdown-row { display:flex; align-items:center; justify-content:space-between; padding:10px 13px; background:var(--surface2); border-radius:9px; border:1px solid var(--border); }
+  .bd-left { display:flex; align-items:center; gap:10px; }
+  .bd-icon { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .bd-icon svg { width:14px; height:14px; }
+  .bd-title { font-size:13px; font-weight:500; }
+  .bd-sub { font-size:11px; color:var(--muted); margin-top:1px; }
+  .bd-pts { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
+  .bd-pts.red { color:var(--red); }
+  .bd-pts.amber { color:var(--amber); }
+
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+
+  /* empty state */
+  .empty-state { text-align:center; padding:40px 20px; }
+  .empty-state svg { width:48px; height:48px; color:var(--muted); margin-bottom:12px; }
+  .empty-state p { font-size:14px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">Hostel<span>OS</span></div>
+    <div class="logo-sub">Student Portal</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Menu</div>
+    <a class="nav-item" href="dashboard-student.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="students.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      My Profile
+    </a>
+    <a class="nav-item active" href="leave.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Leave Application
+    </a>
+    <a class="nav-item" href="complaints.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      Complaints
+    </a>
+    <a class="nav-item" href="fees.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+      Fee Payment
+    </a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="avatar">RK</div>
+    <div>
+      <div class="user-name">Rahul Kumar</div>
+      <div class="user-role">Room 204 · Block B</div>
+    </div>
+  </div>
+  <div class="logout-btn" onclick="logout()">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    Logout
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>Leave Application</h1>
+      <p>Apply for leave · track status · view points impact</p>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <div class="notif-dot"></div>
+      </div>
+      <span class="role-badge">Student</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- POINTS OVERVIEW -->
+    <div class="points-banner">
+      <div class="pts-card blue">
+        <div class="pts-label">Current Score</div>
+        <div class="pts-val" style="color:var(--blue)" id="scoreDisplay">7.4</div>
+        <div class="pts-sub">out of 10.0</div>
+      </div>
+      <div class="pts-card red">
+        <div class="pts-label">Leave Deductions</div>
+        <div class="pts-val" style="color:var(--red)">−1.6</div>
+        <div class="pts-sub">4 approved days</div>
+      </div>
+      <div class="pts-card amber">
+        <div class="pts-label">Late Entry Penalty</div>
+        <div class="pts-val" style="color:var(--amber)">−0.5</div>
+        <div class="pts-sub">2 late entries</div>
+      </div>
+      <div class="pts-card" style="border-color:rgba(239,68,68,0.2)">
+        <div class="pts-label">Attendance Penalty</div>
+        <div class="pts-val" style="color:var(--red)">−0.5</div>
+        <div class="pts-sub">87% attendance</div>
+      </div>
+    </div>
+
+    <!-- SCORE BAR -->
+    <div class="score-bar-wrap">
+      <div class="score-top">
+        <div>
+          <div class="score-title">Hostel Score Breakdown</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Live score. Updated when leaves approved or penalties recorded.</div>
+        </div>
+        <div style="text-align:right">
+          <div class="score-num" id="scoreNum">7.4<span style="font-size:15px;color:var(--muted)">/10</span></div>
+        </div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="scoreFill" style="width:74%"></div></div>
+      <div class="deduction-pills">
+        <span class="pill blue">Base: 10 pts</span>
+        <span class="pill red">Leave days: −1.6</span>
+        <span class="pill amber">Late entry: −0.5</span>
+        <span class="pill red">Property damage: −0</span>
+        <span class="pill amber">Attendance &lt;90%: −0.5</span>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchTab('apply',this)">Apply for Leave</div>
+      <div class="tab" onclick="switchTab('history',this)">Leave History</div>
+      <div class="tab" onclick="switchTab('breakdown',this)">Points Breakdown</div>
+    </div>
+
+    <!-- TAB: APPLY -->
+    <div class="tab-panel active" id="tab-apply">
+      <div class="two-col">
+
+        <!-- FORM -->
+        <div class="card">
+          <div class="card-title">New Leave Request</div>
+          <div class="card-sub">Fill in the form. Warden will review within 24 hrs.</div>
+
+          <div class="info-box amber">
+            ⚠️ Each approved leave day deducts <strong>0.4 points</strong> from your hostel score. Plan wisely.
+          </div>
+
+          <div class="field">
+            <label>Leave Type</label>
+            <select id="leaveType">
+              <option value="">Select reason</option>
+              <option value="home">Home Visit</option>
+              <option value="medical">Medical / Health</option>
+              <option value="family">Family Function</option>
+              <option value="academic">Academic Event</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>From Date</label>
+              <input type="date" id="fromDate" onchange="calcDays()"/>
+            </div>
+            <div class="field">
+              <label>To Date</label>
+              <input type="date" id="toDate" onchange="calcDays()"/>
+            </div>
+          </div>
+
+          <!-- DAYS PREVIEW -->
+          <div class="days-preview" id="daysPreview" style="display:none">
+            <div>
+              <div class="days-num" id="daysCount">0</div>
+            </div>
+            <div>
+              <div class="days-info">days of leave</div>
+              <div class="days-deduct" id="daysDeduct">−0 pts will be deducted on approval</div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:14px">
+            <label>Reason / Details</label>
+            <textarea id="leaveReason" placeholder="Brief explanation for the warden..."></textarea>
+          </div>
+
+          <div class="field">
+            <label>Emergency Contact (while on leave)</label>
+            <input type="text" id="emergencyContact" placeholder="Parent / guardian phone number"/>
+          </div>
+
+          <div id="formError" style="display:none;font-size:12px;color:var(--red);background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);padding:9px 12px;border-radius:8px;margin-bottom:14px;"></div>
+
+          <button class="btn-submit" onclick="submitLeave()">Submit Leave Request</button>
+        </div>
+
+        <!-- PENDING STATUS -->
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Pending Approvals</div>
+            <div class="card-sub" style="margin-bottom:12px">Awaiting warden decision</div>
+            <div id="pendingList">
+              <div class="breakdown-row">
+                <div class="bd-left">
+                  <div class="bd-icon" style="background:rgba(245,158,11,0.1)">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--amber)"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  </div>
+                  <div>
+                    <div class="bd-title">Apr 18 – Apr 19</div>
+                    <div class="bd-sub">Family function · 2 days</div>
+                  </div>
+                </div>
+                <span class="status-badge pending">Pending</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px">Leave Rules</div>
+            <div class="info-box blue" style="margin-bottom:10px">
+              📋 <strong>Point Deduction Rules</strong><br>
+              • Leave days: −0.4 pts / day<br>
+              • Late entry to hostel: −0.25 pts / incident<br>
+              • Property damage: −1 to −3 pts (severity based)<br>
+              • Attendance &lt;90%: −0.5 pts | &lt;75%: −1.5 pts | &lt;60%: −3 pts
+            </div>
+            <div class="info-box amber">
+              ⚡ Leave marked <em>on leave</em> in attendance — does <strong>not</strong> count as absent. Unapproved absence = absent.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /tab-apply -->
+
+    <!-- TAB: HISTORY -->
+    <div class="tab-panel" id="tab-history">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="card-title">Leave History</div>
+          <div class="history-filters">
+            <div class="filter-btn active" onclick="filterHistory('all',this)">All</div>
+            <div class="filter-btn" onclick="filterHistory('approved',this)">Approved</div>
+            <div class="filter-btn" onclick="filterHistory('pending',this)">Pending</div>
+            <div class="filter-btn" onclick="filterHistory('rejected',this)">Rejected</div>
+          </div>
+        </div>
+
+        <table class="leave-table" id="historyTable">
+          <thead>
+            <tr>
+              <th>Dates</th>
+              <th>Type</th>
+              <th>Days</th>
+              <th>Status</th>
+              <th>Points</th>
+              <th>Warden Note</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <!-- injected by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /tab-history -->
+
+    <!-- TAB: BREAKDOWN -->
+    <div class="tab-panel" id="tab-breakdown">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:4px">Points Deduction Log</div>
+          <div class="card-sub">All events affecting your hostel score</div>
+          <div class="breakdown-list" id="breakdownList">
+            <!-- injected by JS -->
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Score Simulation</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:16px">See how an additional leave request would affect your score.</div>
+          <div class="field">
+            <label>How many days of leave?</label>
+            <input type="number" id="simDays" min="1" max="30" placeholder="e.g. 3" oninput="simulate()"/>
+          </div>
+          <div id="simResult" style="display:none" class="info-box amber"></div>
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+            <div class="card-title" style="font-size:13px;margin-bottom:10px">Attendance vs Penalty</div>
+            <table class="leave-table">
+              <thead><tr><th>Attendance %</th><th>Penalty</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>≥ 90%</td><td style="color:var(--green)">0 pts</td><td><span class="status-badge approved">Safe</span></td></tr>
+                <tr><td>75–89%</td><td style="color:var(--amber)">−0.5 pts</td><td><span class="status-badge pending">Caution</span></td></tr>
+                <tr><td>60–74%</td><td style="color:var(--red)">−1.5 pts</td><td><span class="status-badge rejected">Warning</span></td></tr>
+                <tr><td>&lt; 60%</td><td style="color:var(--red)">−3.0 pts</td><td><span class="status-badge rejected">Critical</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-breakdown -->
+
+  </div>
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ Leave request submitted! Warden notified.</div>
+
+<script>
+  if (localStorage.getItem('hostel_role') !== 'student') window.location.href = 'index.html';
+  function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+
+  /* ---- DATA ---- */
+  const DEDUCT_PER_DAY = 0.4;
+  const BASE_SCORE = 10;
+
+  let leaveHistory = JSON.parse(localStorage.getItem('stu_leaves') || 'null') || [
+    { id:'L001', from:'2026-03-22', to:'2026-03-24', type:'Home Visit', days:2, status:'approved', pts:-0.8, note:'Approved. Travel safe.' },
+    { id:'L002', from:'2026-02-14', to:'2026-02-15', type:'Medical',    days:1, status:'approved', pts:-0.4, note:'Approved. Get well soon.' },
+    { id:'L003', from:'2026-04-18', to:'2026-04-19', type:'Family',     days:2, status:'pending',  pts:0,    note:'' },
+  ];
+
+  let deductionLog = JSON.parse(localStorage.getItem('stu_deductions') || 'null') || [
+    { type:'leave',    icon:'calendar', color:'amber', title:'Leave: Mar 22–24',     sub:'Home Visit · 2 days',       pts:-0.8 },
+    { type:'leave',    icon:'calendar', color:'amber', title:'Leave: Feb 14–15',     sub:'Medical · 1 day',           pts:-0.4 },
+    { type:'late',     icon:'clock',    color:'red',   title:'Late Entry – Mar 10',  sub:'Returned after 11 PM',       pts:-0.25 },
+    { type:'late',     icon:'clock',    color:'red',   title:'Late Entry – Feb 28',  sub:'Returned after 11 PM',       pts:-0.25 },
+    { type:'attendance',icon:'eye',     color:'amber', title:'Attendance Penalty',   sub:'87% this month (<90%)',      pts:-0.5 },
+  ];
+
+  function calcScore() {
+    const approved = leaveHistory.filter(l=>l.status==='approved').reduce((a,l)=>a+Math.abs(l.pts),0);
+    const other    = deductionLog.filter(d=>d.type!=='leave').reduce((a,d)=>a+Math.abs(d.pts),0);
+    return Math.max(0, +(BASE_SCORE - approved - other).toFixed(1));
+  }
+
+  function updateScoreUI() {
+    const s = calcScore();
+    document.getElementById('scoreDisplay').textContent = s;
+    document.getElementById('scoreNum').innerHTML = s + '<span style="font-size:15px;color:var(--muted)">/10</span>';
+    document.getElementById('scoreFill').style.width = (s*10)+'%';
+  }
+
+  /* ---- TABS ---- */
+  function switchTab(id, el) {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-'+id).classList.add('active');
+    if(id==='history') renderHistory('all');
+    if(id==='breakdown') renderBreakdown();
+  }
+
+  /* ---- DATE CALC ---- */
+  function calcDays() {
+    const f = document.getElementById('fromDate').value;
+    const t = document.getElementById('toDate').value;
+    if(!f||!t) { document.getElementById('daysPreview').style.display='none'; return; }
+    const diff = Math.round((new Date(t)-new Date(f))/(1000*60*60*24))+1;
+    if(diff<=0) { document.getElementById('daysPreview').style.display='none'; return; }
+    document.getElementById('daysPreview').style.display='flex';
+    document.getElementById('daysCount').textContent = diff;
+    document.getElementById('daysDeduct').textContent = '−'+(diff*DEDUCT_PER_DAY).toFixed(1)+' pts will be deducted on approval';
+  }
+
+  /* ---- SUBMIT ---- */
+  function submitLeave() {
+    const type    = document.getElementById('leaveType').value;
+    const from    = document.getElementById('fromDate').value;
+    const to      = document.getElementById('toDate').value;
+    const reason  = document.getElementById('leaveReason').value.trim();
+    const contact = document.getElementById('emergencyContact').value.trim();
+    const err     = document.getElementById('formError');
+
+    if(!type||!from||!to||!reason||!contact) {
+      err.style.display='block'; err.textContent='Please fill in all fields before submitting.'; return;
+    }
+    const days = Math.round((new Date(to)-new Date(from))/(1000*60*60*24))+1;
+    if(days<=0) { err.style.display='block'; err.textContent='To date must be after From date.'; return; }
+    err.style.display='none';
+
+    const newLeave = {
+      id:'L'+(Date.now()),
+      from, to,
+      type: type.charAt(0).toUpperCase()+type.slice(1),
+      days, status:'pending', pts:0, note:''
+    };
+    leaveHistory.unshift(newLeave);
+    localStorage.setItem('stu_leaves', JSON.stringify(leaveHistory));
+
+    // reset form
+    ['leaveType','fromDate','toDate','leaveReason','emergencyContact'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('daysPreview').style.display='none';
+
+    // show toast
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'),3000);
+
+    renderPending();
+  }
+
+  /* ---- PENDING ---- */
+  function renderPending() {
+    const p = leaveHistory.filter(l=>l.status==='pending');
+    const el = document.getElementById('pendingList');
+    if(p.length===0) {
+      el.innerHTML='<div class="empty-state"><p style="color:var(--muted);font-size:13px">No pending requests.</p></div>';
+      return;
+    }
+    el.innerHTML = p.map(l=>`
+      <div class="breakdown-row" style="margin-bottom:8px">
+        <div class="bd-left">
+          <div class="bd-icon" style="background:rgba(245,158,11,0.1)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--amber)"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <div class="bd-title">${fmtDate(l.from)} – ${fmtDate(l.to)}</div>
+            <div class="bd-sub">${l.type} · ${l.days} day${l.days>1?'s':''}</div>
+          </div>
+        </div>
+        <span class="status-badge pending">Pending</span>
+      </div>
+    `).join('');
+  }
+
+  /* ---- HISTORY ---- */
+  function filterHistory(status, el) {
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+    renderHistory(status);
+  }
+
+  function renderHistory(filter) {
+    const data = filter==='all' ? leaveHistory : leaveHistory.filter(l=>l.status===filter);
+    const tbody = document.getElementById('historyBody');
+    if(data.length===0) {
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">No records found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(l=>`
+      <tr>
+        <td>${fmtDate(l.from)} – ${fmtDate(l.to)}</td>
+        <td>${l.type}</td>
+        <td>${l.days}</td>
+        <td><span class="status-badge ${l.status}">${cap(l.status)}</span></td>
+        <td class="pts-chip ${l.pts<0?'neg':'zero'}">${l.pts<0?l.pts:'—'}</td>
+        <td class="warden-note">${l.note||'—'}</td>
+      </tr>
+    `).join('');
+  }
+
+  /* ---- BREAKDOWN ---- */
+  function renderBreakdown() {
+    const icons = {
+      calendar:`<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,
+      clock:`<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+      eye:`<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`,
+    };
+    const colorMap = { amber:'rgba(245,158,11,0.1)', red:'rgba(239,68,68,0.1)' };
+    const textMap  = { amber:'var(--amber)', red:'var(--red)' };
+
+    document.getElementById('breakdownList').innerHTML = deductionLog.map(d=>`
+      <div class="breakdown-row">
+        <div class="bd-left">
+          <div class="bd-icon" style="background:${colorMap[d.color]}">
+            <span style="color:${textMap[d.color]}">${icons[d.icon]||icons.calendar}</span>
+          </div>
+          <div>
+            <div class="bd-title">${d.title}</div>
+            <div class="bd-sub">${d.sub}</div>
+          </div>
+        </div>
+        <div class="bd-pts red">${d.pts}</div>
+      </div>
+    `).join('');
+  }
+
+  /* ---- SIMULATE ---- */
+  function simulate() {
+    const days = parseInt(document.getElementById('simDays').value)||0;
+    const el = document.getElementById('simResult');
+    if(days<=0) { el.style.display='none'; return; }
+    const current = calcScore();
+    const newScore = Math.max(0,(current - days*DEDUCT_PER_DAY).toFixed(1));
+    el.style.display='block';
+    el.innerHTML = `${days} day leave → score would go from <strong style="color:var(--blue)">${current}</strong> to <strong style="color:${newScore<5?'var(--red)':'var(--amber)'}">${newScore}</strong> (−${(days*DEDUCT_PER_DAY).toFixed(1)} pts)`;
+  }
+
+  /* ---- UTILS ---- */
+  function fmtDate(d) {
+    if(!d) return '—';
+    const dt = new Date(d+'T00:00:00');
+    return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  }
+  function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+
+  /* ---- INIT ---- */
+  updateScoreUI();
+  renderPending();
+</script>
+</body>
+</html>

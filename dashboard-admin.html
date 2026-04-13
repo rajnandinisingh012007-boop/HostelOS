@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostelOS — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0f14; --surface:#13161d; --surface2:#1a1e28;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+    --text:#eef0f6; --muted:#7a7f90;
+    --accent:#6c63ff; --red:#ef4444; --green:#22c55e; --amber:#f59e0b; --blue:#3b82f6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { position:fixed; left:0; top:0; bottom:0; width:220px; background:var(--surface); border-right:1px solid var(--border); padding:24px; z-index:100; }
+  .logo { font-family:'Syne'; font-size:22px; font-weight:800; color:var(--accent); margin-bottom:40px; letter-spacing:-0.5px; }
+  .nav-item { display:flex; align-items:center; color:var(--muted); text-decoration:none; padding:12px; border-radius:12px; margin-bottom:8px; transition:0.2s; font-size:14px; font-weight:500; }
+  .nav-item:hover { background:rgba(255,255,255,0.03); color:var(--text); }
+  .nav-item.active { background:var(--accent); color:white; }
+
+  /* ── MAIN CONTENT ── */
+  main { margin-left:220px; padding:40px; }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; }
+  h1 { font-family:'Syne'; font-size:32px; font-weight:700; }
+  
+  .stats-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:24px; margin-bottom:40px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); padding:24px; border-radius:20px; position:relative; overflow:hidden; }
+  .stat-card::after { content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:var(--accent); opacity:0.3; }
+  .stat-label { color:var(--muted); font-size:13px; font-weight:500; margin-bottom:8px; display:block; }
+  .stat-value { font-family:'Syne'; font-size:28px; font-weight:700; display:block; }
+  .stat-trend { font-size:12px; margin-top:12px; display:flex; align-items:center; gap:4px; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:24px; }
+  .card-title { font-family:'Syne'; font-size:18px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; }
+
+  .quick-links { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+  .q-link { background:var(--surface2); border:1px solid var(--border); padding:20px; border-radius:16px; text-decoration:none; color:inherit; transition:0.2s; }
+  .q-link:hover { border-color:var(--accent); transform:translateY(-2px); }
+  .q-link h3 { font-size:15px; margin-bottom:4px; color:var(--accent); }
+  .q-link p { font-size:12px; color:var(--muted); }
+
+  .loading-shimmer { color:var(--accent); font-size:14px; font-weight:bold; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0% { opacity:1; } 50% { opacity:0.4; } 100% { opacity:1; } }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo">HostelOS</div>
+  <a href="dashboard-admin.html" class="nav-item active">Dashboard</a>
+  <a href="students.html" class="nav-item">Students</a>
+  <a href="rooms.html" class="nav-item">Rooms</a>
+  <a href="visitors.html" class="nav-item">Visitors</a>
+  <a href="complaints.html" class="nav-item">Complaints</a>
+  <a href="#" onclick="logout()" class="nav-item" style="margin-top:40px; color:var(--red)">Logout</a>
+</nav>
+
+<main>
+  <div class="header">
+    <div>
+      <h1 id="greeting">Good Loading...</h1>
+      <p id="liveDate" style="color:var(--muted); font-size:14px; margin-top:4px;">Fetching system status...</p>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-label">Total Students</span>
+      <span class="stat-value" id="count-total"><span class="loading-shimmer">...</span></span>
+      <div class="stat-trend" style="color:var(--green)">↑ Live Data</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Active Residents</span>
+      <span class="stat-value" id="count-active"><span class="loading-shimmer">...</span></span>
+      <div class="stat-trend" style="color:var(--blue)">Residents currently in-house</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Open Complaints</span>
+      <span class="stat-value" id="count-complaints" style="color:var(--amber)"><span class="loading-shimmer">...</span></span>
+      <div class="stat-trend" style="color:var(--red)">Requires Attention</div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+    <div class="card">
+      <div class="card-title">Quick Actions</div>
+      <div class="quick-links">
+        <a href="students.html" class="q-link">
+          <h3>Add Student</h3>
+          <p>Register a new resident to the system.</p>
+        </a>
+        <a href="rooms.html" class="q-link">
+          <h3>Room Audit</h3>
+          <p>Check occupancy and maintenance.</p>
+        </a>
+        <a href="complaints.html" class="q-link">
+          <h3>Resolve Issues</h3>
+          <p>View maintenance & service requests.</p>
+        </a>
+        <a href="visitors.html" class="q-link">
+          <h3>Visitor Logs</h3>
+          <p>Review check-in/out history.</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Admin Info</div>
+      <div style="padding:10px; border-radius:12px; background:var(--surface2); border:1px solid var(--border);">
+        <p style="font-size:13px; color:var(--muted); margin-bottom:10px;">Logged in as:</p>
+        <p id="adminName" style="font-weight:600; font-size:16px; color:var(--accent);">Administrator</p>
+        <p id="adminId" style="font-size:12px; color:var(--muted); margin-top:4px;">ID: ADMIN01</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  // 1. Security Check
+  if (localStorage.getItem('hostel_role') !== 'admin') {
+    window.location.href = 'index.html';
+  }
+
+  // 2. Load Real-Time Data from JSON Backend
+  async function loadDashboardData() {
+    try {
+      const response = await fetch('/api/stats');
+      const data = await response.json();
+
+      // Update the Counters
+      document.getElementById('count-total').innerText = data.total_students || 0;
+      document.getElementById('count-active').innerText = data.active_students || 0;
+      document.getElementById('count-complaints').innerText = data.open_complaints || 0;
+      
+      // Update Admin Identity
+      document.getElementById('adminName').innerText = localStorage.getItem('hostel_user_name') || 'Admin';
+      document.getElementById('adminId').innerText = 'ID: ' + (localStorage.getItem('hostel_user') || 'ADMIN01');
+
+    } catch (err) {
+      console.error("Dashboard failed to load live data:", err);
+    }
+  }
+
+  // 3. UI Helpers
+  function updateUI() {
+    const now = new Date();
+    const h = now.getHours();
+    const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('greeting').innerText = `${greet}, ${localStorage.getItem('hostel_user_name')?.split(' ')[0] || 'Admin'}`;
+    
+    const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+    document.getElementById('liveDate').innerText = now.toLocaleDateString('en-IN', opts) + ' · System Overview';
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = 'index.html';
+  }
+
+  // Run on Load
+  window.onload = () => {
+    updateUI();
+    loadDashboardData();
+  };
+</script>
+
+</body>
+</html>

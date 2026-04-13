@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostelOS — Warden Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0f14; --surface:#13161d; --surface2:#1a1e28;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+    --text:#eef0f6; --muted:#7a7f90;
+    --accent:#f59e0b; --red:#ef4444; --green:#22c55e; --blue:#3b82f6; --purple:#6c63ff;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+  .sidebar { position:fixed; left:0; top:0; bottom:0; width:220px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; z-index:100; }
+  .logo { padding:22px 20px 18px; border-bottom:1px solid var(--border); }
+  .logo-mark { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; color:var(--text); }
+  .logo-mark span { color:var(--accent); }
+  .logo-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .nav { padding:14px 10px; flex:1; }
+  .nav-section { font-size:10px; font-weight:500; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:0 10px; margin:14px 0 5px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13.5px; color:var(--muted); transition:all 0.15s; margin-bottom:2px; text-decoration:none; }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:rgba(245,158,11,0.1); color:var(--accent); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; }
+  .nav-badge { margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-weight:600; padding:1px 6px; border-radius:20px; }
+  .sidebar-user { padding:14px 16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .avatar { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#fcd34d); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:#1a1000; flex-shrink:0; }
+  .user-name { font-size:13px; font-weight:500; }
+  .user-role { font-size:11px; color:var(--muted); }
+  .logout-btn { display:flex; align-items:center; gap:8px; padding:9px 10px 14px; cursor:pointer; font-size:13px; color:var(--muted); transition:all 0.15s; margin:0 10px; border-radius:8px; }
+  .logout-btn:hover { background:rgba(239,68,68,0.08); color:var(--red); }
+
+  .main { margin-left:220px; min-height:100vh; }
+  .topbar { padding:18px 30px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:50; }
+  .topbar h1 { font-family:'Syne',sans-serif; font-size:17px; font-weight:700; }
+  .topbar p { font-size:12px; color:var(--muted); margin-top:2px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .icon-btn { width:36px; height:36px; border-radius:9px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
+  .icon-btn svg { width:16px; height:16px; color:var(--muted); }
+  .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; background:var(--red); border-radius:50%; border:2px solid var(--surface); }
+  .role-badge { font-size:11px; font-weight:600; padding:4px 12px; border-radius:20px; background:rgba(245,158,11,0.12); color:var(--accent); border:1px solid rgba(245,158,11,0.3); }
+
+  .content { padding:26px 30px; }
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; position:relative; overflow:hidden; }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:14px 14px 0 0; }
+  .stat-card.amber::before { background:var(--accent); }
+  .stat-card.purple::before { background:var(--purple); }
+  .stat-card.blue::before { background:var(--blue); }
+  .stat-card.green::before { background:var(--green); }
+  .stat-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+  .stat-icon svg { width:17px; height:17px; }
+  .stat-icon.amber { background:rgba(245,158,11,0.1); color:var(--accent); }
+  .stat-icon.purple { background:rgba(108,99,255,0.1); color:var(--purple); }
+  .stat-icon.blue { background:rgba(59,130,246,0.1); color:var(--blue); }
+  .stat-icon.green { background:rgba(34,197,94,0.1); color:var(--green); }
+  .stat-label { font-size:12px; color:var(--muted); margin-bottom:3px; }
+  .stat-value { font-family:'Syne',sans-serif; font-size:26px; font-weight:700; line-height:1; }
+  .stat-sub { font-size:11px; color:var(--muted); margin-top:4px; }
+  .stat-change { display:inline-flex; font-size:11px; margin-top:5px; padding:2px 7px; border-radius:20px; }
+  .stat-change.warn { background:rgba(245,158,11,0.1); color:var(--accent); }
+  .stat-change.ok { background:rgba(34,197,94,0.08); color:var(--green); }
+
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:22px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px 22px; margin-bottom:18px; }
+  .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .card-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
+  .card-link { font-size:12px; color:var(--accent); cursor:pointer; }
+
+  .leave-request { display:flex; align-items:center; gap:12px; padding:11px 13px; background:var(--surface2); border-radius:10px; margin-bottom:8px; }
+  .req-avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+  .req-info { flex:1; }
+  .req-name { font-size:13px; font-weight:500; }
+  .req-detail { font-size:11px; color:var(--muted); margin-top:1px; }
+  .req-actions { display:flex; gap:6px; }
+  .btn-approve { font-size:11px; padding:5px 11px; border-radius:7px; background:rgba(34,197,94,0.12); color:var(--green); border:1px solid rgba(34,197,94,0.25); cursor:pointer; font-weight:500; transition:all 0.15s; }
+  .btn-approve:hover { background:rgba(34,197,94,0.2); }
+  .btn-reject { font-size:11px; padding:5px 11px; border-radius:7px; background:rgba(239,68,68,0.08); color:var(--red); border:1px solid rgba(239,68,68,0.2); cursor:pointer; font-weight:500; transition:all 0.15s; }
+  .btn-reject:hover { background:rgba(239,68,68,0.15); }
+
+  .complaint-item { display:flex; align-items:flex-start; gap:12px; padding:11px 13px; background:var(--surface2); border-radius:10px; margin-bottom:8px; }
+  .complaint-cat { font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px; flex-shrink:0; margin-top:2px; }
+  .cat-washroom { background:rgba(59,130,246,0.1); color:var(--blue); }
+  .cat-mess { background:rgba(245,158,11,0.1); color:var(--accent); }
+  .cat-room { background:rgba(108,99,255,0.1); color:var(--purple); }
+  .complaint-text { flex:1; }
+  .complaint-title { font-size:13px; font-weight:500; }
+  .complaint-meta { font-size:11px; color:var(--muted); margin-top:2px; }
+  .btn-resolve { font-size:11px; padding:5px 11px; border-radius:7px; background:rgba(34,197,94,0.1); color:var(--green); border:1px solid rgba(34,197,94,0.2); cursor:pointer; font-weight:500; flex-shrink:0; }
+
+  .visitor-item { display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--surface2); border-radius:9px; margin-bottom:7px; }
+  .v-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .v-info { flex:1; }
+  .v-name { font-size:13px; font-weight:500; }
+  .v-meta { font-size:11px; color:var(--muted); }
+  .v-time { font-size:11px; color:var(--muted); }
+  .btn-checkout { font-size:11px; padding:4px 10px; border-radius:6px; background:var(--surface); color:var(--muted); border:1px solid var(--border); cursor:pointer; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">Hostel<span>OS</span></div>
+    <div class="logo-sub">Warden Portal</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Menu</div>
+    <a class="nav-item active" href="dashboard-warden.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="leave-warden.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Leave Requests
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="complaints.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      Complaints
+      <span class="nav-badge">5</span>
+    </a>
+    <a class="nav-item" href="visitors.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M12 8v4l3 3"/></svg>
+      Visitor Log
+    </a>
+    <a class="nav-item" href="students.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Students
+    </a>
+    <a class="nav-item" href="rooms.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Rooms
+    </a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="avatar">SM</div>
+    <div>
+      <div class="user-name">Dr. S. Mehta</div>
+      <div class="user-role">Warden · Block B</div>
+    </div>
+  </div>
+  <div class="logout-btn" onclick="logout()">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    Logout
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1><span id="greeting">Good morning</span>, Dr. Mehta 👋</h1>
+      <p><span id="liveDate">Loading...</span></p>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <div class="notif-dot"></div>
+      </div>
+      <span class="role-badge">Warden</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="stats-grid">
+      <div class="stat-card amber">
+        <div class="stat-icon amber"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
+        <div class="stat-label">Pending Leaves</div>
+        <div class="stat-value" style="color:var(--accent)">3</div>
+        <div class="stat-sub">awaiting approval</div>
+        <div class="stat-change warn">Needs action</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon purple"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
+        <div class="stat-label">Open Complaints</div>
+        <div class="stat-value" style="color:var(--purple)">5</div>
+        <div class="stat-sub">2 high priority</div>
+        <div class="stat-change warn">Review needed</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon blue"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M12 8v4l3 3"/></svg></div>
+        <div class="stat-label">Visitors Today</div>
+        <div class="stat-value" style="color:var(--blue)">4</div>
+        <div class="stat-sub">2 currently inside</div>
+        <div class="stat-change ok">All checked in</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon green"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+        <div class="stat-label">Rooms (Block B)</div>
+        <div class="stat-value" style="color:var(--green)">84</div>
+        <div class="stat-sub">out of 100 occupied</div>
+        <div class="stat-change ok">16 vacant</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Pending Leave Requests</div>
+            <span class="card-link" onclick="window.location.href='leave.html'">View all →</span>
+          </div>
+          <div class="leave-request" id="lr1">
+            <div class="req-avatar" style="background:rgba(59,130,246,0.15);color:var(--blue)">RK</div>
+            <div class="req-info"><div class="req-name">Rahul Kumar — Room 204</div><div class="req-detail">Apr 18–19 · Family function · 2 days</div></div>
+            <div class="req-actions">
+              <button class="btn-approve" onclick="resolveLeave('lr1','approved')">Approve</button>
+              <button class="btn-reject" onclick="resolveLeave('lr1','rejected')">Reject</button>
+            </div>
+          </div>
+          <div class="leave-request" id="lr2">
+            <div class="req-avatar" style="background:rgba(34,197,94,0.15);color:var(--green)">SP</div>
+            <div class="req-info"><div class="req-name">Sneha Patel — Room 118</div><div class="req-detail">Apr 20–21 · Medical · 2 days</div></div>
+            <div class="req-actions">
+              <button class="btn-approve" onclick="resolveLeave('lr2','approved')">Approve</button>
+              <button class="btn-reject" onclick="resolveLeave('lr2','rejected')">Reject</button>
+            </div>
+          </div>
+          <div class="leave-request" id="lr3">
+            <div class="req-avatar" style="background:rgba(245,158,11,0.15);color:var(--accent)">AV</div>
+            <div class="req-info"><div class="req-name">Amit Verma — Room 312</div><div class="req-detail">Apr 22 · Personal · 1 day</div></div>
+            <div class="req-actions">
+              <button class="btn-approve" onclick="resolveLeave('lr3','approved')">Approve</button>
+              <button class="btn-reject" onclick="resolveLeave('lr3','rejected')">Reject</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Open Complaints</div>
+            <span class="card-link" onclick="window.location.href='complaints.html'">View all →</span>
+          </div>
+          <div class="complaint-item">
+            <span class="complaint-cat cat-washroom">Washroom</span>
+            <div class="complaint-text"><div class="complaint-title">Floor 2 washroom not clean</div><div class="complaint-meta">Rahul Kumar · Apr 10 · High priority</div></div>
+            <button class="btn-resolve">Resolve</button>
+          </div>
+          <div class="complaint-item">
+            <span class="complaint-cat cat-mess">Mess</span>
+            <div class="complaint-text"><div class="complaint-title">Food quality poor — dinner</div><div class="complaint-meta">Priya Nair · Apr 11 · Medium</div></div>
+            <button class="btn-resolve">Resolve</button>
+          </div>
+          <div class="complaint-item">
+            <span class="complaint-cat cat-room">Room</span>
+            <div class="complaint-text"><div class="complaint-title">Room 308 light not working</div><div class="complaint-meta">Karan Joshi · Apr 9 · Low</div></div>
+            <button class="btn-resolve">Resolve</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Current Visitors</div>
+            <span class="card-link" onclick="window.location.href='visitors.html'">Log entry →</span>
+          </div>
+          <div class="visitor-item">
+            <div class="v-dot" style="background:var(--green)"></div>
+            <div class="v-info"><div class="v-name">Mr. Suresh Kumar</div><div class="v-meta">Visiting: Rahul Kumar, Room 204</div></div>
+            <span class="v-time">In at 2:30 PM</span>
+            <button class="btn-checkout">Check out</button>
+          </div>
+          <div class="visitor-item">
+            <div class="v-dot" style="background:var(--green)"></div>
+            <div class="v-info"><div class="v-name">Mrs. Kavita Patel</div><div class="v-meta">Visiting: Sneha Patel, Room 118</div></div>
+            <span class="v-time">In at 3:10 PM</span>
+            <button class="btn-checkout">Check out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  if (localStorage.getItem('hostel_role') !== 'warden') window.location.href = 'index.html';
+  function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+  function updateDateTime() {
+    const now = new Date();
+    const h = now.getHours();
+    const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    const greetEl = document.getElementById('greeting');
+    if (greetEl) greetEl.textContent = greet;
+    const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+    const dateEl = document.getElementById('liveDate');
+    if (dateEl) dateEl.textContent = now.toLocaleDateString('en-IN', opts) + ' · Block B — 3 pending actions';
+  }
+  updateDateTime();
+  setInterval(updateDateTime, 60000);
+  let notifOpen = false;
+  function toggleNotif() {
+    notifOpen = !notifOpen;
+    document.getElementById('notifPanel').style.display = notifOpen ? 'block' : 'none';
+  }
+  function markAllRead() {
+    document.getElementById('notifDot').style.display = 'none';
+    document.getElementById('notifPanel').style.display = 'none';
+    notifOpen = false;
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#notifBtn') && !e.target.closest('#notifPanel')) {
+      if (notifOpen) { document.getElementById('notifPanel').style.display = 'none'; notifOpen = false; }
+    }
+  });
+
+  function resolveLeave(id, action) {
+    const el = document.getElementById(id);
+    const color = action === 'approved' ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+    const label = action === 'approved' ? '✓ Approved' : '✗ Rejected';
+    const lcolor = action === 'approved' ? 'var(--green)' : 'var(--red)';
+    el.style.background = color;
+    el.querySelector('.req-actions').innerHTML = `<span style="font-size:12px;font-weight:600;color:${lcolor}">${label}</span>`;
+  }
+</script>
+</body>
+</html>

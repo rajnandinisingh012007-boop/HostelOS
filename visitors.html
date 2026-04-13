@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostelOS — Visitor Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0f14; --surface:#13161d; --surface2:#1a1e28;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+    --text:#eef0f6; --muted:#7a7f90;
+    --accent:#6c63ff; --red:#ef4444; --green:#22c55e; --amber:#f59e0b; --blue:#3b82f6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { position:fixed; left:0; top:0; bottom:0; width:220px; background:var(--surface); border-right:1px solid var(--border); padding:24px; }
+  .logo { font-family:'Syne'; font-size:20px; font-weight:800; color:var(--accent); margin-bottom:40px; }
+  .nav-item { display:block; color:var(--muted); text-decoration:none; padding:12px; border-radius:8px; margin-bottom:8px; transition:0.2s; font-size:14px; }
+  .nav-item:hover { background:rgba(255,255,255,0.03); color:var(--text); }
+  .nav-item.active { background:var(--accent); color:white; }
+
+  /* ── MAIN ── */
+  main { margin-left:220px; padding:40px; }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:32px; }
+  h1 { font-family:'Syne'; font-size:28px; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; text-align:left; }
+  th { padding:16px; color:var(--muted); font-size:12px; text-transform:uppercase; border-bottom:1px solid var(--border); }
+  td { padding:16px; border-bottom:1px solid var(--border); font-size:14px; }
+  
+  .pill { padding:4px 10px; border-radius:6px; font-size:12px; font-weight:500; }
+  .pill.active { background:rgba(34,197,94,0.1); color:var(--green); }
+  .pill.out { background:rgba(255,255,255,0.05); color:var(--muted); }
+
+  .loading { text-align:center; padding:40px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo">HostelOS</div>
+  <a href="dashboard-admin.html" class="nav-item">Dashboard</a>
+  <a href="students.html" class="nav-item">Students</a>
+  <a href="visitors.html" class="nav-item active">Visitors</a>
+  <a href="complaints.html" class="nav-item">Complaints</a>
+  <a href="#" onclick="localStorage.clear(); window.location.href='index.html'" class="nav-item">Logout</a>
+</nav>
+
+<main>
+  <div class="header">
+    <div>
+      <h1>Visitor Log</h1>
+      <p style="color:var(--muted); font-size:14px; margin-top:4px;">Live tracking of hostel entries and exits</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <table id="visitorTable">
+      <thead>
+        <tr>
+          <th>Visitor Name</th>
+          <th>Relation</th>
+          <th>Visiting Student</th>
+          <th>Check In</th>
+          <th>Check Out</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="visitorTableBody">
+        <tr><td colspan="6" class="loading">Fetching records...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+  // Auth Check
+  const role = localStorage.getItem('hostel_role');
+  if (role !== 'admin' && role !== 'warden') {
+    window.location.href = 'index.html';
+  }
+
+  async function loadVisitors() {
+    try {
+      const response = await fetch('/api/visitors');
+      const visitors = await response.json();
+      
+      const tbody = document.getElementById('visitorTableBody');
+      if (visitors.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="loading">No visitor records found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = visitors.map(v => {
+        const isOut = v.check_out !== 'Still In';
+        return `
+          <tr>
+            <td><strong>${v.visitor}</strong></td>
+            <td>${v.relation}</td>
+            <td>${v.student_name}</td>
+            <td>${v.check_in}</td>
+            <td style="color:${isOut ? 'var(--muted)' : 'var(--amber)'}">${v.check_out}</td>
+            <td>
+              <span class="pill ${isOut ? 'out' : 'active'}">
+                ${isOut ? 'Checked Out' : 'On Campus'}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      document.getElementById('visitorTableBody').innerHTML = 
+        '<tr><td colspan="6" class="loading" style="color:var(--red)">Failed to connect to backend.</td></tr>';
+    }
+  }
+
+  // Load data on page start
+  window.onload = loadVisitors;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostelOS — Student Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0f14; --surface:#13161d; --surface2:#1a1e28; --surface3:#20253300;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+    --text:#eef0f6; --muted:#7a7f90;
+    --accent:#6c63ff; --red:#ef4444; --green:#22c55e; --amber:#f59e0b; --blue:#3b82f6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { position:fixed; left:0; top:0; bottom:0; width:220px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; z-index:100; }
+  .logo { padding:22px 20px 18px; border-bottom:1px solid var(--border); }
+  .logo-mark { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; }
+  .logo-mark span { color:var(--accent); }
+  .logo-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .nav { padding:14px 10px; flex:1; overflow-y:auto; }
+  .nav-section { font-size:10px; font-weight:500; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:0 10px; margin:14px 0 5px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13.5px; color:var(--muted); transition:all 0.15s; margin-bottom:2px; }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:rgba(108,99,255,0.12); color:var(--accent); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; }
+  .nav-badge { margin-left:auto; font-size:10px; font-weight:600; padding:1px 6px; border-radius:20px; }
+  .nav-badge.red { background:var(--red); color:#fff; }
+  .nav-badge.blue { background:rgba(59,130,246,0.2); color:var(--blue); }
+  .sidebar-user { padding:14px 16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:#fff; flex-shrink:0; }
+  .av-admin { background:linear-gradient(135deg,var(--accent),#a78bfa); }
+  .av-warden { background:linear-gradient(135deg,var(--amber),#f97316); }
+  .av-student { background:linear-gradient(135deg,var(--blue),#06b6d4); }
+  .user-name { font-size:13px; font-weight:500; }
+  .user-role { font-size:11px; color:var(--muted); }
+  .logout-btn { display:flex; align-items:center; gap:8px; padding:9px 10px 14px; cursor:pointer; font-size:13px; color:var(--muted); transition:all 0.15s; margin:0 10px; border-radius:8px; }
+  .logout-btn:hover { background:rgba(239,68,68,0.08); color:var(--red); }
+
+  /* ── MAIN ── */
+  .main { margin-left:220px; min-height:100vh; }
+  .topbar { padding:16px 30px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:50; }
+  .topbar-left h1 { font-family:'Syne',sans-serif; font-size:17px; font-weight:700; }
+  .topbar-left p { font-size:12px; color:var(--muted); margin-top:2px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .icon-btn { width:36px; height:36px; border-radius:9px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
+  .icon-btn svg { width:16px; height:16px; color:var(--muted); }
+  .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; background:var(--red); border-radius:50%; border:2px solid var(--surface); }
+  .role-badge-pill { font-size:11px; font-weight:600; padding:4px 12px; border-radius:20px; }
+  .role-badge-pill.admin { background:rgba(108,99,255,0.12); color:var(--accent); border:1px solid rgba(108,99,255,0.25); }
+  .role-badge-pill.warden { background:rgba(245,158,11,0.1); color:var(--amber); border:1px solid rgba(245,158,11,0.2); }
+  .role-badge-pill.student { background:rgba(59,130,246,0.1); color:var(--blue); border:1px solid rgba(59,130,246,0.2); }
+
+  .content { padding:26px 30px; }
+
+  /* ── VIEW TOGGLE ── */
+  .view-tabs { display:flex; gap:6px; }
+  .view-tab { padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); font-size:13px; color:var(--muted); cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:6px; }
+  .view-tab svg { width:14px; height:14px; }
+  .view-tab.active { background:rgba(108,99,255,0.1); border-color:rgba(108,99,255,0.3); color:var(--accent); }
+  .view-tab:hover:not(.active) { background:var(--surface2); color:var(--text); }
+
+  /* ── TOOLBAR ── */
+  .toolbar { display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+  .search-wrap { position:relative; flex:1; min-width:220px; }
+  .search-wrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--muted); pointer-events:none; }
+  .search-input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:9px 14px 9px 36px; font-size:13.5px; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.15s; }
+  .search-input:focus { border-color:rgba(108,99,255,0.4); }
+  .search-input::placeholder { color:var(--muted); }
+  .filter-select { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:9px 14px; font-size:13px; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; cursor:pointer; }
+  .filter-select option { background:var(--surface2); }
+  .btn { padding:9px 16px; border-radius:10px; font-size:13px; font-weight:600; font-family:'Syne',sans-serif; border:none; cursor:pointer; display:flex; align-items:center; gap:7px; transition:all 0.15s; }
+  .btn svg { width:15px; height:15px; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { opacity:0.88; }
+  .btn-ghost { background:var(--surface); border:1px solid var(--border); color:var(--muted); }
+  .btn-ghost:hover { background:var(--surface2); color:var(--text); }
+
+  /* ── STATS ROW ── */
+  .stats-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px; }
+  .strip-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; position:relative; overflow:hidden; }
+  .strip-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:12px 12px 0 0; }
+  .strip-card.blue::after { background:var(--blue); }
+  .strip-card.green::after { background:var(--green); }
+  .strip-card.amber::after { background:var(--amber); }
+  .strip-card.purple::after { background:var(--accent); }
+  .strip-icon { width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .strip-icon svg { width:18px; height:18px; }
+  .strip-icon.blue { background:rgba(59,130,246,0.1); color:var(--blue); }
+  .strip-icon.green { background:rgba(34,197,94,0.1); color:var(--green); }
+  .strip-icon.amber { background:rgba(245,158,11,0.1); color:var(--amber); }
+  .strip-icon.purple { background:rgba(108,99,255,0.1); color:var(--accent); }
+  .strip-info { flex:1; }
+  .strip-val { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; line-height:1; }
+  .strip-lbl { font-size:11px; color:var(--muted); margin-top:3px; }
+
+  /* ── TABLE VIEW ── */
+  #tableView { display:block; }
+  #gridView  { display:none; }
+  #profileView { display:none; }
+  #addView { display:none; }
+
+  .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .table-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .table-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
+  .table-count { font-size:12px; color:var(--muted); }
+  table { width:100%; border-collapse:collapse; }
+  thead th { padding:11px 16px; text-align:left; font-size:11px; color:var(--muted); font-weight:500; letter-spacing:0.5px; text-transform:uppercase; border-bottom:1px solid var(--border); background:var(--surface2); }
+  tbody tr { border-bottom:1px solid var(--border); transition:background 0.1s; cursor:pointer; }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:rgba(108,99,255,0.04); }
+  td { padding:12px 16px; font-size:13.5px; }
+  .stu-cell { display:flex; align-items:center; gap:10px; }
+  .stu-av { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:11px; color:#fff; flex-shrink:0; }
+  .stu-name { font-weight:500; font-size:13.5px; }
+  .stu-roll { font-size:11px; color:var(--muted); }
+  .tag { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; }
+  .tag.veg    { background:rgba(34,197,94,0.1); color:var(--green); }
+  .tag.nonveg { background:rgba(239,68,68,0.1); color:var(--red); }
+  .tag.both   { background:rgba(245,158,11,0.1); color:var(--amber); }
+  .tag.active { background:rgba(34,197,94,0.1); color:var(--green); }
+  .tag.pending{ background:rgba(245,158,11,0.1); color:var(--amber); }
+  .tag.inactive{background:rgba(239,68,68,0.08); color:var(--muted); }
+  .action-cell { display:flex; align-items:center; gap:6px; }
+  .act-btn { width:28px; height:28px; border-radius:7px; border:1px solid var(--border); background:var(--surface2); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; }
+  .act-btn svg { width:13px; height:13px; color:var(--muted); }
+  .act-btn:hover { border-color:var(--border2); }
+  .act-btn:hover svg { color:var(--text); }
+  .act-btn.view:hover { background:rgba(59,130,246,0.1); border-color:rgba(59,130,246,0.3); }
+  .act-btn.view:hover svg { color:var(--blue); }
+  .act-btn.edit:hover { background:rgba(108,99,255,0.1); border-color:rgba(108,99,255,0.3); }
+  .act-btn.edit:hover svg { color:var(--accent); }
+  .act-btn.del:hover { background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.2); }
+  .act-btn.del:hover svg { color:var(--red); }
+
+  /* ── GRID VIEW ── */
+  .student-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+  .stu-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; cursor:pointer; transition:all 0.15s; }
+  .stu-card:hover { border-color:var(--border2); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+  .stu-card-top { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .stu-card-av { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:16px; color:#fff; flex-shrink:0; }
+  .stu-card-name { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
+  .stu-card-roll { font-size:12px; color:var(--muted); margin-top:2px; }
+  .stu-card-divider { height:1px; background:var(--border); margin:0 0 12px; }
+  .stu-card-row { display:flex; justify-content:space-between; align-items:center; font-size:12.5px; margin-bottom:8px; }
+  .stu-card-row:last-child { margin-bottom:0; }
+  .stu-card-key { color:var(--muted); }
+  .stu-card-val { font-weight:500; }
+
+  /* ── PROFILE VIEW ── */
+  .profile-back { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); cursor:pointer; margin-bottom:22px; transition:color 0.15s; width:fit-content; }
+  .profile-back:hover { color:var(--text); }
+  .profile-back svg { width:16px; height:16px; }
+  .profile-layout { display:grid; grid-template-columns:320px 1fr; gap:20px; align-items:start; }
+  .profile-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:26px; }
+  .profile-avatar-wrap { text-align:center; margin-bottom:20px; position:relative; }
+  .profile-av { width:80px; height:80px; border-radius:20px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:800; font-size:28px; color:#fff; margin:0 auto 12px; }
+  .profile-name { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; }
+  .profile-roll { font-size:13px; color:var(--muted); margin-top:4px; }
+  .profile-status { margin-top:10px; }
+  .profile-divider { height:1px; background:var(--border); margin:18px 0; }
+  .profile-field { margin-bottom:14px; }
+  .profile-field:last-child { margin-bottom:0; }
+  .pf-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; }
+  .pf-val { font-size:13.5px; font-weight:500; }
+  .pf-val.editable { display:flex; align-items:center; justify-content:space-between; }
+  .pf-edit-btn { width:24px; height:24px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; }
+  .pf-edit-btn svg { width:11px; height:11px; color:var(--muted); }
+  .pf-edit-btn:hover { border-color:rgba(108,99,255,0.4); }
+  .pf-edit-btn:hover svg { color:var(--accent); }
+  .profile-right { display:flex; flex-direction:column; gap:16px; }
+  .prcard { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px 22px; }
+  .prcard-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
+
+  /* MESS MENU */
+  .mess-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .mess-day { text-align:center; }
+  .mess-day-name { font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+  .mess-day-name.today { color:var(--accent); }
+  .mess-slot { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:7px 5px; margin-bottom:5px; }
+  .mess-slot.today-slot { border-color:rgba(108,99,255,0.3); background:rgba(108,99,255,0.06); }
+  .mess-slot-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:3px; }
+  .mess-slot-item { font-size:10.5px; font-weight:500; line-height:1.3; }
+
+  /* ACTIVITY TIMELINE */
+  .timeline { display:flex; flex-direction:column; gap:0; }
+  .tl-item { display:flex; gap:12px; padding-bottom:16px; position:relative; }
+  .tl-item:last-child { padding-bottom:0; }
+  .tl-item::before { content:''; position:absolute; left:15px; top:28px; bottom:0; width:1px; background:var(--border); }
+  .tl-item:last-child::before { display:none; }
+  .tl-dot { width:30px; height:30px; border-radius:50%; border:2px solid var(--border); background:var(--surface2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .tl-dot svg { width:13px; height:13px; }
+  .tl-dot.blue { border-color:rgba(59,130,246,0.4); background:rgba(59,130,246,0.1); color:var(--blue); }
+  .tl-dot.green { border-color:rgba(34,197,94,0.4); background:rgba(34,197,94,0.1); color:var(--green); }
+  .tl-dot.amber { border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.1); color:var(--amber); }
+  .tl-dot.purple { border-color:rgba(108,99,255,0.4); background:rgba(108,99,255,0.1); color:var(--accent); }
+  .tl-content { flex:1; padding-top:4px; }
+  .tl-title { font-size:13px; font-weight:500; }
+  .tl-time { font-size:11px; color:var(--muted); margin-top:2px; }
+
+  /* ── ADD STUDENT FORM ── */
+  .form-layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-layout.full { grid-template-columns:1fr; }
+  .form-field { margin-bottom:0; }
+  .form-field label { display:block; font-size:12px; color:var(--muted); margin-bottom:7px; font-weight:500; letter-spacing:0.2px; }
+  .form-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 13px; font-size:13.5px; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.15s; }
+  .form-input:focus { border-color:rgba(108,99,255,0.45); }
+  .form-input::placeholder { color:var(--muted); }
+  select.form-input option { background:var(--surface2); }
+  .form-section { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px 24px; margin-bottom:18px; }
+  .form-section-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+  .form-section-title svg { width:16px; height:16px; color:var(--accent); }
+  .form-actions { display:flex; gap:10px; justify-content:flex-end; }
+  .btn-save { background:var(--accent); color:#fff; padding:10px 24px; border-radius:10px; font-family:'Syne',sans-serif; font-size:14px; font-weight:700; border:none; cursor:pointer; transition:opacity 0.15s; }
+  .btn-save:hover { opacity:0.88; }
+  .btn-cancel { background:var(--surface2); color:var(--muted); padding:10px 18px; border-radius:10px; font-family:'Syne',sans-serif; font-size:14px; font-weight:600; border:1px solid var(--border); cursor:pointer; transition:all 0.15s; }
+  .btn-cancel:hover { color:var(--text); }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; z-index:999; transform:translateY(80px); opacity:0; transition:all 0.3s; box-shadow:0 12px 40px rgba(0,0,0,0.5); }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+  .toast-icon svg { width:16px; height:16px; }
+  .toast-icon.green { background:rgba(34,197,94,0.12); color:var(--green); }
+  .toast-title { font-size:13px; font-weight:600; }
+  .toast-sub { font-size:12px; color:var(--muted); margin-top:1px; }
+
+  /* MODAL (edit field) */
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+  .overlay.show { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border2); border-radius:16px; padding:26px; width:100%; max-width:420px; }
+  .modal-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:6px; }
+  .modal-sub { font-size:13px; color:var(--muted); margin-bottom:20px; }
+  .modal-field { margin-bottom:14px; }
+  .modal-field label { display:block; font-size:12px; color:var(--muted); margin-bottom:7px; }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+  /* empty state */
+  .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+  .empty-state svg { width:48px; height:48px; margin:0 auto 14px; opacity:0.3; }
+  .empty-state p { font-size:14px; }
+
+  /* role-aware hide */
+  .admin-only, .warden-only { display:none; }
+  .role-admin .admin-only { display:initial; }
+  .role-admin .admin-only.flex { display:flex; }
+  .role-admin .admin-only.grid { display:grid; }
+  .role-warden .warden-only, .role-admin .warden-only { display:initial; }
+  .role-warden .warden-only.flex, .role-admin .warden-only.flex { display:flex; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:999px; }
+</style>
+</head>
+<body class="role-admin" id="bodyEl">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">Hostel<span>OS</span></div>
+    <div class="logo-sub">Hostel Management System</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <div class="nav-item" onclick="window.location.href='dashboard-admin.html'">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item active">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Student Management
+      <span class="nav-badge blue">342</span>
+    </div>
+    <div class="nav-section">Modules</div>
+    <div class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>
+      Complaints
+      <span class="nav-badge red">8</span>
+    </div>
+    <div class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Room Allocation
+    </div>
+    <div class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77"/></svg>
+      Mess Management
+    </div>
+    <div class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Attendance
+    </div>
+    <div class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Fee Management
+    </div>
+    <div class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Reports
+    </div>
+    <div class="nav-section">System</div>
+    <div class="nav-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Settings
+    </div>
+  </nav>
+
+  <div class="sidebar-user">
+    <div class="avatar av-admin" id="sideAvatar">A</div>
+    <div>
+      <div class="user-name" id="sideUserName">Admin User</div>
+      <div class="user-role" id="sideUserRole">System Administrator</div>
+    </div>
+  </div>
+  <div class="logout-btn" onclick="window.location.href='index.html'">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Sign out
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 id="topTitle">Student Management</h1>
+      <p id="topSub">Module 2 · Manage profiles, rooms and mess preferences</p>
+    </div>
+    <div class="topbar-right">
+      <div class="view-tabs">
+        <div class="view-tab active" id="tabTable" onclick="switchView('table')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          List
+        </div>
+        <div class="view-tab" id="tabGrid" onclick="switchView('grid')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Cards
+        </div>
+      </div>
+      <div class="icon-btn">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <div class="notif-dot"></div>
+      </div>
+      <div class="role-badge-pill admin" id="topRoleBadge">Admin</div>
+    </div>
+  </div>
+
+  <!-- ─── CONTENT ─── -->
+  <div class="content">
+
+    <!-- STATS STRIP -->
+    <div class="stats-strip">
+      <div class="strip-card blue">
+        <div class="strip-icon blue">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        </div>
+        <div class="strip-info">
+          <div class="strip-val">342</div>
+          <div class="strip-lbl">Total Students</div>
+        </div>
+      </div>
+      <div class="strip-card green">
+        <div class="strip-icon green">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="strip-info">
+          <div class="strip-val">318</div>
+          <div class="strip-lbl">Active / Present</div>
+        </div>
+      </div>
+      <div class="strip-card amber">
+        <div class="strip-icon amber">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div class="strip-info">
+          <div class="strip-val">14</div>
+          <div class="strip-lbl">Vacant Rooms</div>
+        </div>
+      </div>
+      <div class="strip-card purple">
+        <div class="strip-icon purple">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77"/></svg>
+        </div>
+        <div class="strip-info">
+          <div class="strip-val">7</div>
+          <div class="strip-lbl">Pending Entries</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="searchInput" type="text" placeholder="Search by name, roll no., or room…" oninput="doSearch()"/>
+      </div>
+      <select class="filter-select" id="filterMess" onchange="doSearch()">
+        <option value="">All Mess Types</option>
+        <option value="Veg">Veg</option>
+        <option value="Non-Veg">Non-Veg</option>
+        <option value="Both">Both</option>
+      </select>
+      <select class="filter-select" id="filterBlock" onchange="doSearch()">
+        <option value="">All Blocks</option>
+        <option value="A">Block A</option>
+        <option value="B">Block B</option>
+        <option value="C">Block C</option>
+        <option value="D">Block D</option>
+      </select>
+      <select class="filter-select" id="filterFloor" onchange="doSearch()">
+        <option value="">All Floors</option>
+        <option value="1">Floor 1</option>
+        <option value="2">Floor 2</option>
+        <option value="3">Floor 3</option>
+      </select>
+      <div class="admin-only flex" style="gap:8px">
+        <button class="btn btn-ghost" onclick="exportCSV()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+        <button class="btn btn-primary" onclick="switchView('add')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Student
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ TABLE VIEW ══ -->
+    <div id="tableView">
+      <div class="table-wrap">
+        <div class="table-header">
+          <div>
+            <div class="table-title">All Students</div>
+            <div class="table-count" id="tableCount">Showing 6 of 342 students</div>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Room</th>
+              <th>Block / Floor</th>
+              <th>Mess Pref.</th>
+              <th>Contact</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty-state" id="tableEmpty" style="display:none">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          <p>No students match your search.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ GRID VIEW ══ -->
+    <div id="gridView">
+      <div class="student-grid" id="gridBody"></div>
+      <div class="empty-state" id="gridEmpty" style="display:none">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <p>No students match your search.</p>
+      </div>
+    </div>
+
+    <!-- ══ PROFILE VIEW ══ -->
+    <div id="profileView">
+      <div class="profile-back" onclick="goBack()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Students
+      </div>
+      <div class="profile-layout">
+        <!-- LEFT: Core info card -->
+        <div>
+          <div class="profile-card">
+            <div class="profile-avatar-wrap">
+              <div class="profile-av" id="pAvatar" style="background:linear-gradient(135deg,#3b82f6,#06b6d4)">A</div>
+              <div class="profile-name" id="pName">—</div>
+              <div class="profile-roll" id="pRoll">—</div>
+              <div class="profile-status">
+                <span class="tag active" id="pStatus">Active</span>
+              </div>
+            </div>
+            <div class="profile-divider"></div>
+            <div class="profile-field">
+              <div class="pf-label">Room Number</div>
+              <div class="pf-val editable">
+                <span id="pRoom">—</span>
+                <div class="pf-edit-btn warden-only" onclick="openEditModal('room')" style="display:flex">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="pf-label">Block</div>
+              <div class="pf-val" id="pBlock">—</div>
+            </div>
+            <div class="profile-field">
+              <div class="pf-label">Floor</div>
+              <div class="pf-val" id="pFloor">—</div>
+            </div>
+            <div class="profile-field">
+              <div class="pf-label">Mess Preference</div>
+              <div class="pf-val editable">
+                <span id="pMess">—</span>
+                <div class="pf-edit-btn warden-only" onclick="openEditModal('mess')" style="display:flex">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="profile-divider"></div>
+            <div class="profile-field">
+              <div class="pf-label">Student Contact</div>
+              <div class="pf-val" id="pContact">—</div>
+            </div>
+            <div class="profile-field">
+              <div class="pf-label">Parent Contact</div>
+              <div class="pf-val" id="pParent">—</div>
+            </div>
+            <div class="profile-field">
+              <div class="pf-label">Email</div>
+              <div class="pf-val" id="pEmail">—</div>
+            </div>
+            <div class="profile-field">
+              <div class="pf-label">Admitted On</div>
+              <div class="pf-val" id="pAdmit">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Mess menu + activity -->
+        <div class="profile-right">
+          <!-- Mess schedule -->
+          <div class="prcard">
+            <div class="prcard-title">
+              Weekly Mess Schedule
+              <span class="tag" id="pMessTag" style="background:rgba(34,197,94,0.1);color:var(--green)">Veg</span>
+            </div>
+            <div class="mess-grid" id="messGrid"></div>
+          </div>
+
+          <!-- Activity -->
+          <div class="prcard">
+            <div class="prcard-title">Recent Activity</div>
+            <div class="timeline" id="activityTimeline"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ADD STUDENT VIEW ══ -->
+    <div id="addView">
+      <div class="profile-back" onclick="goBack()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Students
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          Personal Information
+        </div>
+        <div class="form-layout">
+          <div class="form-field"><label>Full Name *</label><input class="form-input" type="text" id="fName" placeholder="e.g. Rohan Sharma"/></div>
+          <div class="form-field"><label>Roll Number *</label><input class="form-input" type="text" id="fRoll" placeholder="e.g. 2024CS001"/></div>
+          <div class="form-field"><label>Student Contact *</label><input class="form-input" type="tel" id="fContact" placeholder="+91 98765 43210"/></div>
+          <div class="form-field"><label>Parent / Guardian Contact *</label><input class="form-input" type="tel" id="fParent" placeholder="+91 98765 43211"/></div>
+          <div class="form-field"><label>Email Address</label><input class="form-input" type="email" id="fEmail" placeholder="student@college.edu"/></div>
+          <div class="form-field"><label>Date of Birth</label><input class="form-input" type="date" id="fDob"/></div>
+          <div class="form-field"><label>Course / Branch</label><input class="form-input" type="text" id="fCourse" placeholder="e.g. B.Tech CSE"/></div>
+          <div class="form-field"><label>Year / Semester</label>
+            <select class="form-input" id="fYear">
+              <option value="">Select year</option>
+              <option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          Room & Hostel Details
+        </div>
+        <div class="form-layout">
+          <div class="form-field"><label>Block *</label>
+            <select class="form-input" id="fBlock" onchange="updateRooms()">
+              <option value="">Select block</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option>
+            </select>
+          </div>
+          <div class="form-field"><label>Floor *</label>
+            <select class="form-input" id="fFloor" onchange="updateRooms()">
+              <option value="">Select floor</option>
+              <option>1</option><option>2</option><option>3</option>
+            </select>
+          </div>
+          <div class="form-field"><label>Room Number *</label>
+            <select class="form-input" id="fRoom">
+              <option value="">Select block & floor first</option>
+            </select>
+          </div>
+          <div class="form-field"><label>Admission Date</label><input class="form-input" type="date" id="fAdmit"/></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7"/></svg>
+          Mess Preference
+        </div>
+        <div class="form-layout">
+          <div class="form-field"><label>Mess Type *</label>
+            <select class="form-input" id="fMess">
+              <option value="">Select preference</option>
+              <option>Veg</option><option>Non-Veg</option><option>Both</option>
+            </select>
+          </div>
+          <div class="form-field"><label>Dietary Restrictions / Allergies</label>
+            <input class="form-input" type="text" id="fDiet" placeholder="e.g. No peanuts, lactose intolerant"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-cancel" onclick="goBack()">Cancel</button>
+        <button class="btn-save" onclick="saveStudent()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline;margin-right:6px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Student
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ═══ EDIT MODAL ═══ -->
+<div class="overlay" id="editOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Edit Room</div>
+    <div class="modal-sub" id="modalSub">Update the room assignment for this student.</div>
+    <div class="modal-field" id="modalField"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('editOverlay').classList.remove('show')">Cancel</button>
+      <button class="btn-save" onclick="saveModal()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast">
+  <div class="toast-icon green">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div>
+    <div class="toast-title" id="toastTitle">Saved successfully</div>
+    <div class="toast-sub" id="toastSub">Changes have been applied.</div>
+  </div>
+</div>
+
+<script>
+    let STUDENTS = [];
+
+    async function init() {
+        if (!['admin', 'warden'].includes(localStorage.getItem('hostel_role'))) {
+            window.location.href = 'index.html';
+        }
+        
+        try {
+            const response = await fetch('/api/students');
+            STUDENTS = await response.json();
+            renderTable();
+        } catch (err) {
+            console.error("Failed to fetch students:", err);
+        }
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('studentTableBody');
+        tbody.innerHTML = STUDENTS.map(s => `
+            <tr>
+                <td>${s.id}</td>
+                <td><strong>${s.name}</strong></td>
+                <td>${s.roll}</td>
+                <td>Room ${s.room}</td>
+                <td><span class="status-pill ${s.status}">${s.status}</span></td>
+                <td>${s.contact}</td>
+            </tr>
+        `).join('');
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>

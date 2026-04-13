@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostelOS — Complaint System</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0f14; --surface:#13161d; --surface2:#1a1e28;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+    --text:#eef0f6; --muted:#7a7f90;
+    --accent:#6c63ff; --red:#ef4444; --green:#22c55e; --amber:#f59e0b; --blue:#3b82f6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { position:fixed; left:0; top:0; bottom:0; width:220px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; z-index:100; }
+  .logo { padding:22px 20px 18px; border-bottom:1px solid var(--border); }
+  .logo-mark { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; }
+  .logo-mark span { color:var(--accent); }
+  .logo-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .nav { padding:14px 10px; flex:1; overflow-y:auto; }
+  .nav-section { font-size:10px; font-weight:500; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:0 10px; margin:14px 0 5px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13.5px; color:var(--muted); transition:all 0.15s; margin-bottom:2px; text-decoration:none; }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:rgba(108,99,255,0.12); color:var(--accent); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; }
+  .nav-badge { margin-left:auto; font-size:10px; font-weight:600; padding:1px 6px; border-radius:20px; background:var(--red); color:#fff; }
+  .sidebar-user { padding:14px 16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:#fff; flex-shrink:0; }
+  .av-admin   { background:linear-gradient(135deg,#6c63ff,#a78bfa); }
+  .av-warden  { background:linear-gradient(135deg,#f59e0b,#f97316); }
+  .av-student { background:linear-gradient(135deg,#3b82f6,#06b6d4); }
+  .user-name { font-size:13px; font-weight:500; }
+  .user-role { font-size:11px; color:var(--muted); }
+  .logout-btn { display:flex; align-items:center; gap:8px; padding:9px 10px 14px; cursor:pointer; font-size:13px; color:var(--muted); transition:all 0.15s; margin:0 10px; border-radius:8px; }
+  .logout-btn:hover { background:rgba(239,68,68,0.08); color:var(--red); }
+
+  /* ── MAIN ── */
+  .main { margin-left:220px; min-height:100vh; }
+  .topbar { padding:16px 30px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:50; }
+  .topbar-left h1 { font-family:'Syne',sans-serif; font-size:17px; font-weight:700; }
+  .topbar-left p { font-size:12px; color:var(--muted); margin-top:2px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .icon-btn { width:36px; height:36px; border-radius:9px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
+  .icon-btn svg { width:16px; height:16px; color:var(--muted); }
+  .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; background:var(--red); border-radius:50%; border:2px solid var(--surface); }
+  .role-badge-pill { font-size:11px; font-weight:600; padding:4px 12px; border-radius:20px; }
+  .role-badge-pill.admin   { background:rgba(108,99,255,0.12); color:var(--accent); border:1px solid rgba(108,99,255,0.25); }
+  .role-badge-pill.warden  { background:rgba(245,158,11,0.1);  color:var(--amber);  border:1px solid rgba(245,158,11,0.2); }
+  .role-badge-pill.student { background:rgba(59,130,246,0.1);  color:var(--blue);   border:1px solid rgba(59,130,246,0.2); }
+
+  .content { padding:26px 30px; }
+
+  /* ── STATS ── */
+  .stats-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px; }
+  .strip-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; position:relative; overflow:hidden; }
+  .strip-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:12px 12px 0 0; }
+  .strip-card.red::after    { background:var(--red); }
+  .strip-card.amber::after  { background:var(--amber); }
+  .strip-card.green::after  { background:var(--green); }
+  .strip-card.purple::after { background:var(--accent); }
+  .strip-icon { width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .strip-icon svg { width:18px; height:18px; }
+  .strip-icon.red    { background:rgba(239,68,68,0.1);   color:var(--red); }
+  .strip-icon.amber  { background:rgba(245,158,11,0.1);  color:var(--amber); }
+  .strip-icon.green  { background:rgba(34,197,94,0.1);   color:var(--green); }
+  .strip-icon.purple { background:rgba(108,99,255,0.1);  color:var(--accent); }
+  .strip-val { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; line-height:1; }
+  .strip-lbl { font-size:11px; color:var(--muted); margin-top:3px; }
+
+  /* ── TABS ── */
+  .page-tabs { display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+  .page-tab { padding:8px 16px; border-radius:9px; border:1px solid var(--border); background:var(--surface); font-size:13px; color:var(--muted); cursor:pointer; transition:all 0.15s; font-family:'DM Sans',sans-serif; }
+  .page-tab.active { background:rgba(108,99,255,0.1); border-color:rgba(108,99,255,0.3); color:var(--accent); font-weight:600; }
+  .page-tab:hover:not(.active) { background:var(--surface2); color:var(--text); }
+
+  /* ── TOOLBAR ── */
+  .toolbar { display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+  .search-wrap { position:relative; flex:1; min-width:200px; }
+  .search-wrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--muted); pointer-events:none; }
+  .search-input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:9px 14px 9px 36px; font-size:13.5px; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.15s; }
+  .search-input:focus { border-color:rgba(108,99,255,0.4); }
+  .search-input::placeholder { color:var(--muted); }
+  .filter-select { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:9px 14px; font-size:13px; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; cursor:pointer; }
+  .filter-select option { background:var(--surface2); }
+  .btn { padding:9px 16px; border-radius:10px; font-size:13px; font-weight:600; font-family:'Syne',sans-serif; border:none; cursor:pointer; display:flex; align-items:center; gap:7px; transition:all 0.15s; white-space:nowrap; }
+  .btn svg { width:15px; height:15px; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { opacity:0.88; }
+
+  /* ── COMPLAINT LIST ── */
+  .complaint-list { display:flex; flex-direction:column; gap:10px; }
+  .complaint-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 20px; cursor:pointer; transition:all 0.15s; }
+  .complaint-card:hover { border-color:var(--border2); }
+  .complaint-card.escalated { border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.03); }
+  .cc-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px; }
+  .cc-left { display:flex; align-items:flex-start; gap:12px; flex:1; }
+  .cc-cat-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .cc-cat-icon svg { width:18px; height:18px; }
+  .cc-cat-icon.washroom { background:rgba(59,130,246,0.1); color:var(--blue); }
+  .cc-cat-icon.mess     { background:rgba(245,158,11,0.1); color:var(--amber); }
+  .cc-cat-icon.room     { background:rgba(108,99,255,0.1); color:var(--accent); }
+  .cc-cat-icon.electrical { background:rgba(34,197,94,0.1); color:var(--green); }
+  .cc-cat-icon.other    { background:rgba(122,127,144,0.1); color:var(--muted); }
+  .cc-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; margin-bottom:4px; }
+  .cc-meta  { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .cc-badges { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .tag { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; white-space:nowrap; }
+  .tag.open      { background:rgba(239,68,68,0.1);   color:var(--red); }
+  .tag.review    { background:rgba(245,158,11,0.1);  color:var(--amber); }
+  .tag.resolved  { background:rgba(34,197,94,0.1);   color:var(--green); }
+  .tag.low       { background:rgba(122,127,144,0.1); color:var(--muted); }
+  .tag.medium    { background:rgba(245,158,11,0.1);  color:var(--amber); }
+  .tag.high      { background:rgba(239,68,68,0.1);   color:var(--red); }
+  .tag.washroom  { background:rgba(59,130,246,0.1);  color:var(--blue); }
+  .tag.mess      { background:rgba(245,158,11,0.1);  color:var(--amber); }
+  .tag.room      { background:rgba(108,99,255,0.1);  color:var(--accent); }
+  .tag.electrical{ background:rgba(34,197,94,0.1);   color:var(--green); }
+  .tag.other     { background:rgba(122,127,144,0.1); color:var(--muted); }
+  .tag.escalated { background:rgba(239,68,68,0.15);  color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+  .cc-desc { font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:12px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .cc-bottom { display:flex; align-items:center; justify-content:space-between; }
+  .cc-stu { display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); }
+  .mini-av { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:9px; color:#fff; }
+  .cc-actions { display:flex; gap:6px; }
+  .act-btn { padding:5px 12px; border-radius:7px; font-size:12px; font-weight:600; border:1px solid var(--border); background:var(--surface2); cursor:pointer; color:var(--muted); transition:all 0.15s; font-family:'Syne',sans-serif; }
+  .act-btn:hover { color:var(--text); border-color:var(--border2); }
+  .act-btn.resolve { background:rgba(34,197,94,0.08); border-color:rgba(34,197,94,0.2); color:var(--green); }
+  .act-btn.resolve:hover { background:rgba(34,197,94,0.15); }
+  .escalate-banner { display:flex; align-items:center; gap:8px; background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.2); border-radius:8px; padding:8px 12px; margin-bottom:10px; font-size:12px; color:var(--red); }
+  .escalate-banner svg { width:14px; height:14px; flex-shrink:0; }
+
+  /* ── DETAIL / FORM PANEL ── */
+  .panel-back { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); cursor:pointer; margin-bottom:22px; transition:color 0.15s; width:fit-content; }
+  .panel-back:hover { color:var(--text); }
+  .panel-back svg { width:16px; height:16px; }
+  .detail-layout { display:grid; grid-template-columns:1fr 380px; gap:20px; align-items:start; }
+  .pcard { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px; margin-bottom:16px; }
+  .pcard:last-child { margin-bottom:0; }
+  .pcard-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; margin-bottom:16px; }
+
+  /* STATUS STEPPER */
+  .stepper { display:flex; align-items:center; gap:0; }
+  .step { display:flex; align-items:center; flex:1; }
+  .step-dot { width:28px; height:28px; border-radius:50%; border:2px solid var(--border); background:var(--surface2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .step-dot svg { width:13px; height:13px; }
+  .step-dot.done  { border-color:var(--green); background:rgba(34,197,94,0.15); color:var(--green); }
+  .step-dot.active{ border-color:var(--accent); background:rgba(108,99,255,0.15); color:var(--accent); }
+  .step-dot.pending{ border-color:var(--border); color:var(--muted); }
+  .step-line { flex:1; height:2px; background:var(--border); margin:0 4px; }
+  .step-line.done { background:var(--green); }
+  .step-info { text-align:center; }
+  .step-label { font-size:11px; color:var(--muted); margin-top:6px; }
+  .step-label.active { color:var(--accent); font-weight:600; }
+  .step-label.done   { color:var(--green); }
+  .stepper-wrap { display:flex; flex-direction:column; gap:0; }
+  .stepper-row { display:flex; align-items:flex-start; gap:0; }
+  .stepper-dots { display:flex; align-items:center; gap:0; flex:1; }
+
+  /* AI BOT BUBBLE */
+  .ai-bubble { background:rgba(108,99,255,0.07); border:1px solid rgba(108,99,255,0.2); border-radius:12px; padding:14px 16px; }
+  .ai-bubble-top { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .ai-av { width:28px; height:28px; border-radius:8px; background:rgba(108,99,255,0.2); display:flex; align-items:center; justify-content:center; }
+  .ai-av svg { width:14px; height:14px; color:var(--accent); }
+  .ai-name { font-size:12px; font-weight:600; color:var(--accent); }
+  .ai-name span { color:var(--muted); font-weight:400; }
+  .ai-text { font-size:13px; line-height:1.6; color:var(--text); }
+  .ai-eta { display:inline-flex; align-items:center; gap:5px; margin-top:10px; font-size:12px; font-weight:600; padding:4px 10px; border-radius:20px; background:rgba(34,197,94,0.1); color:var(--green); }
+  .ai-loading { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); }
+  .ai-loading span { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); animation:blink 1.2s infinite; }
+  .ai-loading span:nth-child(2){ animation-delay:0.2s; }
+  .ai-loading span:nth-child(3){ animation-delay:0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
+
+  /* TIMELINE */
+  .tl-item { display:flex; gap:12px; padding-bottom:16px; position:relative; }
+  .tl-item:last-child { padding-bottom:0; }
+  .tl-item::before { content:''; position:absolute; left:14px; top:28px; bottom:0; width:1px; background:var(--border); }
+  .tl-item:last-child::before { display:none; }
+  .tl-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .tl-dot svg { width:13px; height:13px; }
+  .tl-dot.blue   { background:rgba(59,130,246,0.1); color:var(--blue);   border:2px solid rgba(59,130,246,0.3); }
+  .tl-dot.purple { background:rgba(108,99,255,0.1); color:var(--accent); border:2px solid rgba(108,99,255,0.3); }
+  .tl-dot.amber  { background:rgba(245,158,11,0.1); color:var(--amber);  border:2px solid rgba(245,158,11,0.3); }
+  .tl-dot.green  { background:rgba(34,197,94,0.1);  color:var(--green);  border:2px solid rgba(34,197,94,0.3); }
+  .tl-title { font-size:13px; font-weight:500; }
+  .tl-time  { font-size:11px; color:var(--muted); margin-top:2px; }
+
+  /* RESOLVE FORM */
+  .resolve-form { display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+  .resolve-form.show { display:block; }
+  .form-label { font-size:12px; color:var(--muted); margin-bottom:7px; display:block; }
+  .form-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 13px; font-size:13.5px; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.15s; }
+  .form-input:focus { border-color:rgba(108,99,255,0.45); }
+  .form-input::placeholder { color:var(--muted); }
+  textarea.form-input { resize:vertical; min-height:80px; }
+
+  /* RAISE FORM */
+  .raise-layout { max-width:640px; }
+  .form-section { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px 24px; margin-bottom:16px; }
+  .form-section-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .form-section-title svg { width:16px; height:16px; color:var(--accent); }
+  .cat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:0; }
+  .cat-option { border:1px solid var(--border); border-radius:10px; padding:12px 14px; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:10px; background:var(--surface2); }
+  .cat-option:hover { border-color:var(--border2); }
+  .cat-option.selected { border-color:rgba(108,99,255,0.4); background:rgba(108,99,255,0.08); }
+  .cat-option.selected .cat-label { color:var(--accent); }
+  .cat-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .cat-icon svg { width:16px; height:16px; }
+  .cat-icon.washroom   { background:rgba(59,130,246,0.1); color:var(--blue); }
+  .cat-icon.mess       { background:rgba(245,158,11,0.1); color:var(--amber); }
+  .cat-icon.room       { background:rgba(108,99,255,0.1); color:var(--accent); }
+  .cat-icon.electrical { background:rgba(34,197,94,0.1); color:var(--green); }
+  .cat-icon.other      { background:rgba(122,127,144,0.1); color:var(--muted); }
+  .cat-label { font-size:13px; font-weight:600; }
+  .cat-sub   { font-size:11px; color:var(--muted); margin-top:2px; }
+  .upload-zone { border:2px dashed var(--border2); border-radius:10px; padding:24px; text-align:center; cursor:pointer; transition:all 0.15s; margin-top:4px; }
+  .upload-zone:hover { border-color:rgba(108,99,255,0.4); background:rgba(108,99,255,0.03); }
+  .upload-zone svg { width:28px; height:28px; color:var(--muted); margin:0 auto 8px; display:block; }
+  .upload-zone p { font-size:13px; color:var(--muted); }
+  .upload-zone span { font-size:12px; color:var(--accent); }
+  .form-actions { display:flex; gap:10px; justify-content:flex-end; }
+  .btn-save { background:var(--accent); color:#fff; padding:10px 24px; border-radius:10px; font-family:'Syne',sans-serif; font-size:14px; font-weight:700; border:none; cursor:pointer; transition:opacity 0.15s; display:flex; align-items:center; gap:8px; }
+  .btn-save:hover { opacity:0.88; }
+  .btn-save svg { width:15px; height:15px; }
+  .btn-cancel { background:var(--surface2); color:var(--muted); padding:10px 18px; border-radius:10px; font-family:'Syne',sans-serif; font-size:14px; font-weight:600; border:1px solid var(--border); cursor:pointer; }
+  .btn-cancel:hover { color:var(--text); }
+  .field-gap { margin-bottom:14px; }
+
+  /* EMPTY */
+  .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+  .empty-state svg { width:48px; height:48px; margin:0 auto 14px; opacity:0.3; }
+  .empty-state p { font-size:14px; }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; z-index:999; transform:translateY(80px); opacity:0; transition:all 0.3s; box-shadow:0 12px 40px rgba(0,0,0,0.5); }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+  .toast-icon svg { width:16px; height:16px; }
+  .toast-icon.green { background:rgba(34,197,94,0.12); color:var(--green); }
+  .toast-title { font-size:13px; font-weight:600; }
+  .toast-sub { font-size:12px; color:var(--muted); margin-top:1px; }
+
+  /* OVERLAY MODAL */
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+  .overlay.show { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border2); border-radius:16px; padding:26px; width:100%; max-width:420px; }
+  .modal-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:6px; }
+  .modal-sub { font-size:13px; color:var(--muted); margin-bottom:20px; }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:999px; }
+
+  /* role-hide */
+  .admin-only  { display:none; }
+  .warden-only { display:none; }
+  .student-only{ display:none; }
+  .role-admin   .admin-only   { display:initial; }
+  .role-admin   .admin-only.flex  { display:flex; }
+  .role-admin   .warden-only  { display:initial; }
+  .role-admin   .warden-only.flex { display:flex; }
+  .role-warden  .warden-only  { display:initial; }
+  .role-warden  .warden-only.flex { display:flex; }
+  .role-student .student-only { display:initial; }
+  .role-student .student-only.flex{ display:flex; }
+</style>
+</head>
+<body class="role-admin" id="bodyEl">
+
+<!-- ══ SIDEBAR ══ -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">Hostel<span>OS</span></div>
+    <div class="logo-sub">Hostel Management System</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Overview</div>
+    <a class="nav-item" href="dashboard-admin.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section">Manage</div>
+    <a class="nav-item" href="students.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Students
+    </a>
+    <a class="nav-item" href="rooms.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      Rooms
+    </a>
+    <a class="nav-item" href="fees.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+      Fee Management
+    </a>
+    <a class="nav-item active" href="complaints.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      Complaints
+      <span class="nav-badge" id="navBadge">8</span>
+    </a>
+    <a class="nav-item" href="visitors.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Visitors
+    </a>
+    <div class="nav-section">Reports</div>
+    <a class="nav-item" href="admin.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Reports &amp; Export
+    </a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="avatar av-admin" id="sideAvatar">A</div>
+    <div>
+      <div class="user-name" id="sideUserName">Admin User</div>
+      <div class="user-role" id="sideUserRole">System Administrator</div>
+    </div>
+  </div>
+  <div class="logout-btn" onclick="window.location.href='index.html'">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Sign out
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Complaint System</h1>
+      <p>Module 4 · Raise, track and resolve hostel complaints</p>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <div class="notif-dot"></div>
+      </div>
+      <div class="role-badge-pill admin" id="topRoleBadge">Admin</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-strip" id="statsStrip">
+      <div class="strip-card red">
+        <div class="strip-icon red"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div><div class="strip-val" id="statOpen">8</div><div class="strip-lbl">Open</div></div>
+      </div>
+      <div class="strip-card amber">
+        <div class="strip-icon amber"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div><div class="strip-val" id="statReview">3</div><div class="strip-lbl">Under Review</div></div>
+      </div>
+      <div class="strip-card green">
+        <div class="strip-icon green"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div><div class="strip-val" id="statResolved">24</div><div class="strip-lbl">Resolved this month</div></div>
+      </div>
+      <div class="strip-card purple">
+        <div class="strip-icon purple"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <div><div class="strip-val" id="statEscalated">2</div><div class="strip-lbl">Escalated</div></div>
+      </div>
+    </div>
+
+    <!-- PAGE TABS -->
+    <div class="page-tabs" id="pageTabs">
+      <div class="page-tab active" onclick="showTab('list',this)">All Complaints</div>
+      <div class="page-tab admin-only" onclick="showTab('list',this)" id="tabOpen" style="display:none">Open Only</div>
+      <div class="page-tab student-only" onclick="showTab('raise',this)">Raise a Complaint</div>
+      <div class="page-tab student-only" onclick="showTab('mine',this)">My Complaints</div>
+    </div>
+
+    <!-- ══ LIST VIEW ══ -->
+    <div id="viewList">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="searchInput" type="text" placeholder="Search complaints…" oninput="renderList()"/>
+        </div>
+        <select class="filter-select" id="filterCat" onchange="renderList()">
+          <option value="">All Categories</option>
+          <option>Washroom</option><option>Mess</option><option>Room</option><option>Electrical</option><option>Other</option>
+        </select>
+        <select class="filter-select" id="filterStatus" onchange="renderList()">
+          <option value="">All Status</option>
+          <option value="open">Open</option>
+          <option value="review">Under Review</option>
+          <option value="resolved">Resolved</option>
+        </select>
+        <select class="filter-select" id="filterUrgency" onchange="renderList()">
+          <option value="">All Urgency</option>
+          <option>High</option><option>Medium</option><option>Low</option>
+        </select>
+        <button class="btn btn-primary student-only" onclick="showTab('raise', document.querySelector('.page-tab.student-only'))">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Raise Complaint
+        </button>
+      </div>
+      <div class="complaint-list" id="complaintList"></div>
+      <div class="empty-state" id="listEmpty" style="display:none">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <p>No complaints match your filters.</p>
+      </div>
+    </div>
+
+    <!-- ══ DETAIL VIEW ══ -->
+    <div id="viewDetail" style="display:none">
+      <div class="panel-back" onclick="backToList()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Complaints
+      </div>
+      <div class="detail-layout">
+        <div>
+          <!-- complaint body -->
+          <div class="pcard">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px" id="dTitle"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap" id="dBadges"></div>
+              </div>
+              <div id="dCatIcon"></div>
+            </div>
+            <div id="dEscBanner" style="display:none" class="escalate-banner">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              This issue has been reported 3+ times this month. Auto-escalated to admin.
+            </div>
+            <p style="font-size:13.5px;line-height:1.7;color:var(--muted);margin-bottom:16px" id="dDesc"></p>
+            <div style="font-size:12px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap" id="dMeta"></div>
+          </div>
+
+          <!-- AI response -->
+          <div class="pcard">
+            <div class="pcard-title">AI Bot Response</div>
+            <div class="ai-bubble" id="aiBubble">
+              <div class="ai-bubble-top">
+                <div class="ai-av"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+                <div><div class="ai-name">HostelBot <span>· AI Assistant</span></div></div>
+              </div>
+              <div class="ai-text" id="aiText"></div>
+              <div class="ai-eta" id="aiEta"></div>
+            </div>
+          </div>
+
+          <!-- Resolve section (warden/admin) -->
+          <div class="pcard warden-only" id="resolveCard">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div class="pcard-title" style="margin-bottom:0">Resolution</div>
+              <button class="act-btn resolve" id="resolveToggleBtn" onclick="toggleResolveForm()">Mark as Resolved</button>
+            </div>
+            <div class="resolve-form" id="resolveForm">
+              <div class="field-gap" style="margin-top:14px">
+                <label class="form-label">Resolution Note</label>
+                <textarea class="form-input" id="resolveNote" placeholder="Describe what action was taken…"></textarea>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button class="btn-cancel" style="font-size:13px;padding:8px 14px" onclick="toggleResolveForm()">Cancel</button>
+                <button class="btn-save" style="font-size:13px;padding:8px 18px" onclick="submitResolve()">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  Confirm Resolved
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: status + timeline -->
+        <div>
+          <div class="pcard">
+            <div class="pcard-title">Status Tracker</div>
+            <!-- stepper -->
+            <div id="stepperEl" style="margin-bottom:20px"></div>
+          </div>
+          <div class="pcard">
+            <div class="pcard-title">Activity Log</div>
+            <div id="detailTimeline"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RAISE VIEW (student) ══ -->
+    <div id="viewRaise" style="display:none">
+      <div class="raise-layout">
+        <div class="form-section">
+          <div class="form-section-title">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            Select Category
+          </div>
+          <div class="cat-grid">
+            <div class="cat-option selected" data-cat="Washroom" onclick="selectCat(this)">
+              <div class="cat-icon washroom"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 12h16M4 6h16M4 18h7"/></svg></div>
+              <div><div class="cat-label">Washroom</div><div class="cat-sub">Cleanliness, leakage, taps</div></div>
+            </div>
+            <div class="cat-option" data-cat="Mess" onclick="selectCat(this)">
+              <div class="cat-icon mess"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+              <div><div class="cat-label">Mess / Food</div><div class="cat-sub">Food quality, timings</div></div>
+            </div>
+            <div class="cat-option" data-cat="Room" onclick="selectCat(this)">
+              <div class="cat-icon room"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+              <div><div class="cat-label">Room</div><div class="cat-sub">Furniture, locks, windows</div></div>
+            </div>
+            <div class="cat-option" data-cat="Electrical" onclick="selectCat(this)">
+              <div class="cat-icon electrical"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+              <div><div class="cat-label">Electrical</div><div class="cat-sub">Lights, fans, sockets</div></div>
+            </div>
+            <div class="cat-option" data-cat="Other" onclick="selectCat(this)" style="grid-column:span 2">
+              <div class="cat-icon other"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+              <div><div class="cat-label">Other</div><div class="cat-sub">Anything else not listed above</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Describe the Issue
+          </div>
+          <div class="field-gap">
+            <label class="form-label">Title *</label>
+            <input class="form-input" type="text" id="cTitle" placeholder="Short summary e.g. Washroom tap broken on Floor 2"/>
+          </div>
+          <div class="field-gap">
+            <label class="form-label">Description *</label>
+            <textarea class="form-input" id="cDesc" rows="4" placeholder="Describe the problem in detail. Include location, time noticed, how long it has been an issue…"></textarea>
+          </div>
+          <div class="field-gap">
+            <label class="form-label">Room / Location</label>
+            <input class="form-input" type="text" id="cLocation" placeholder="e.g. Block A, Room 201 washroom"/>
+          </div>
+          <div>
+            <label class="form-label">Photo (optional)</label>
+            <div class="upload-zone" onclick="document.getElementById('photoInput').click()">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <p>Click to upload a photo</p>
+              <span>PNG, JPG up to 5MB</span>
+            </div>
+            <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="previewPhoto(event)"/>
+            <img id="photoPreview" style="display:none;margin-top:10px;border-radius:10px;max-width:100%;max-height:180px;object-fit:cover;border:1px solid var(--border)" />
+          </div>
+        </div>
+
+        <!-- AI preview bubble (shown after submit) -->
+        <div id="aiPreviewWrap" style="display:none;margin-bottom:16px">
+          <div class="pcard">
+            <div class="pcard-title">AI Bot Response</div>
+            <div class="ai-bubble">
+              <div class="ai-bubble-top">
+                <div class="ai-av"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+                <div><div class="ai-name">HostelBot <span>· AI Assistant</span></div></div>
+              </div>
+              <div class="ai-loading" id="aiLoadingDots">
+                <span></span><span></span><span></span>
+                <span style="margin-left:4px;font-size:13px">HostelBot is analysing your complaint…</span>
+              </div>
+              <div class="ai-text" id="aiPreviewText" style="display:none"></div>
+              <div class="ai-eta" id="aiPreviewEta" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions" id="raiseActions">
+          <button class="btn-cancel" onclick="showTab('mine', null)">Cancel</button>
+          <button class="btn-save" onclick="submitComplaint()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Submit Complaint
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- RESOLVE MODAL (confirm) -->
+<div class="overlay" id="resolveOverlay" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <div class="modal-title">Confirm Resolution</div>
+    <div class="modal-sub">Mark this complaint as resolved and notify the student?</div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('resolveOverlay').classList.remove('show')">Cancel</button>
+      <button class="btn-save" onclick="confirmResolve()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>
+        Yes, Mark Resolved
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-icon green">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div>
+    <div class="toast-title" id="toastTitle">Done</div>
+    <div class="toast-sub"  id="toastSub">Changes applied.</div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────
+const CAT_ICONS = {
+  Washroom:   `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 12h16M4 6h16M4 18h7"/></svg>`,
+  Mess:       `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+  Room:       `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>`,
+  Electrical: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+  Other:      `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+};
+const AV_COLORS = ['linear-gradient(135deg,#3b82f6,#06b6d4)','linear-gradient(135deg,#6c63ff,#a78bfa)','linear-gradient(135deg,#f59e0b,#f97316)','linear-gradient(135deg,#22c55e,#10b981)','linear-gradient(135deg,#ef4444,#f97316)'];
+function avCol(i){ return AV_COLORS[i % AV_COLORS.length]; }
+function initials(n){ return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+
+let COMPLAINTS = [
+  { id:'CMP001', cat:'Washroom', title:'Washroom tap broken — Block A Floor 2', desc:'The tap in the common washroom on Floor 2, Block A has been broken for 3 days now. Water is continuously dripping which is wasteful and making the floor slippery and dangerous.', status:'open', urgency:'High', student:'Aarav Mehta', sid:'STU001', room:'A-201', date:'2026-04-10 09:14', escalated:true, repeatCount:4, aiResp:'Your complaint about a broken washroom tap has been logged and categorised as a plumbing issue. The maintenance team will be notified immediately given the safety risk.', aiEta:'Expected resolution: within 24 hours', log:[{type:'blue',label:'Complaint submitted',time:'10 Apr · 9:14 AM'},{type:'purple',label:'AI: Categorised as Plumbing · Urgency High',time:'10 Apr · 9:14 AM'},{type:'red',label:'Auto-escalated: 4th report this month',time:'10 Apr · 9:15 AM'}] },
+  { id:'CMP002', cat:'Mess', title:'Food quality very poor — dinner 9 Apr', desc:'The dal served at dinner on April 9th was undercooked and had a foul smell. Several students complained but nothing was done.', status:'review', urgency:'Medium', student:'Priya Sharma', sid:'STU002', room:'B-305', date:'2026-04-09 21:30', escalated:false, repeatCount:1, aiResp:'We are sorry to hear about the food quality concern. This has been flagged to the mess supervisor for immediate review. Your feedback helps improve standards for everyone.', aiEta:'Expected resolution: within 48 hours', log:[{type:'blue',label:'Complaint submitted',time:'9 Apr · 9:30 PM'},{type:'purple',label:'AI: Categorised as Food Quality · Urgency Medium',time:'9 Apr · 9:30 PM'},{type:'amber',label:'Warden moved to Under Review',time:'10 Apr · 8:00 AM'}] },
+  { id:'CMP003', cat:'Electrical', title:'Room light not working — A-102', desc:'The ceiling light in my room A-102 has stopped working. The tube light flickers and then goes off. I have been using my phone torch at night.', status:'open', urgency:'High', student:'Rahul Gupta', sid:'STU003', room:'A-102', date:'2026-04-11 07:45', escalated:false, repeatCount:1, aiResp:'A faulty ceiling light is a high-priority electrical issue. The maintenance team will be dispatched to your room. Please avoid tampering with the fitting.', aiEta:'Expected resolution: within 12 hours', log:[{type:'blue',label:'Complaint submitted',time:'11 Apr · 7:45 AM'},{type:'purple',label:'AI: Categorised as Electrical · Urgency High',time:'11 Apr · 7:45 AM'}] },
+  { id:'CMP004', cat:'Room', title:'Cupboard lock broken — C-210', desc:'The lock on my cupboard is completely broken. I cannot secure my belongings. This has been an issue since I moved in two weeks ago.', status:'open', urgency:'Medium', student:'Sneha Patel', sid:'STU004', room:'C-210', date:'2026-04-08 14:20', escalated:false, repeatCount:1, aiResp:'A broken cupboard lock is a security concern and has been marked as medium priority. The maintenance team will arrange a replacement lock.', aiEta:'Expected resolution: within 48 hours', log:[{type:'blue',label:'Complaint submitted',time:'8 Apr · 2:20 PM'},{type:'purple',label:'AI: Categorised as Room · Urgency Medium',time:'8 Apr · 2:20 PM'}] },
+  { id:'CMP005', cat:'Washroom', title:'No hot water — Block D Morning', desc:'There is no hot water available in Block D showers in the mornings. The geyser seems to have stopped working.', status:'resolved', urgency:'High', student:'Dev Kumar', sid:'STU005', room:'D-101', date:'2026-04-05 06:30', escalated:false, repeatCount:2, aiResp:'No hot water is a comfort and hygiene issue affecting multiple students. The maintenance team will check the geyser immediately.', aiEta:'Resolved', log:[{type:'blue',label:'Complaint submitted',time:'5 Apr · 6:30 AM'},{type:'purple',label:'AI: Categorised as Plumbing · Urgency High',time:'5 Apr · 6:30 AM'},{type:'amber',label:'Warden assigned plumber',time:'5 Apr · 9:00 AM'},{type:'green',label:'Resolved: Geyser element replaced',time:'5 Apr · 4:00 PM'}], resolveNote:'Geyser heating element was replaced by the plumber. Hot water restored.' },
+  { id:'CMP006', cat:'Mess', title:'Mess closed early — lunch 8 Apr', desc:'The mess was closed at 1:15 PM instead of the usual 2:00 PM. Many students coming from late labs missed lunch entirely.', status:'resolved', urgency:'Low', student:'Ananya Singh', sid:'STU006', room:'B-201', date:'2026-04-08 13:30', escalated:false, repeatCount:1, aiResp:'Early mess closure affects students with varying timetables. This has been flagged to the mess committee for review of operating hours.', aiEta:'Resolved', log:[{type:'blue',label:'Complaint submitted',time:'8 Apr · 1:30 PM'},{type:'purple',label:'AI: Categorised as Mess Timings · Urgency Low',time:'8 Apr · 1:30 PM'},{type:'green',label:'Resolved: Mess in-charge counselled',time:'9 Apr · 10:00 AM'}], resolveNote:'Mess in-charge reminded of closing time policy. Documented in mess log.' },
+  { id:'CMP007', cat:'Washroom', title:'Washroom drain blocked — Block A Floor 3', desc:'The drain in the Floor 3 washroom, Block A is blocked. Water is accumulating and becoming a health hazard.', status:'open', urgency:'High', student:'Kabir Joshi', sid:'STU007', room:'A-310', date:'2026-04-12 08:00', escalated:true, repeatCount:3, aiResp:'A blocked drain is a hygiene emergency. This has been flagged as high priority and the plumbing team will be alerted immediately.', aiEta:'Expected resolution: within 6 hours', log:[{type:'blue',label:'Complaint submitted',time:'12 Apr · 8:00 AM'},{type:'purple',label:'AI: Categorised as Plumbing · Urgency High',time:'12 Apr · 8:00 AM'},{type:'red',label:'Auto-escalated: 3rd report this month',time:'12 Apr · 8:01 AM'}] },
+  { id:'CMP008', cat:'Other', title:'Wi-Fi not working in study room', desc:'The Wi-Fi in the common study room has been down since yesterday evening. Students unable to study or submit assignments online.', status:'review', urgency:'Medium', student:'Meera Iyer', sid:'STU008', room:'C-105', date:'2026-04-11 20:00', escalated:false, repeatCount:1, aiResp:'Wi-Fi connectivity issues in study areas affect academic performance. The IT maintenance team has been notified to restore service as soon as possible.', aiEta:'Expected resolution: within 24 hours', log:[{type:'blue',label:'Complaint submitted',time:'11 Apr · 8:00 PM'},{type:'purple',label:'AI: Categorised as IT/Network · Urgency Medium',time:'11 Apr · 8:00 PM'},{type:'amber',label:'Admin moved to Under Review',time:'12 Apr · 9:00 AM'}] },
+];
+
+let currentRole = localStorage.getItem('hostel_role') || 'admin';
+let activeComplaintId = null;
+let selectedCat = 'Washroom';
+let currentView = 'list';
+
+// ─── INIT ─────────────────────────────────────────
+(function init(){
+  const body = document.getElementById('bodyEl');
+  body.className = 'role-' + currentRole;
+  const roleLabels = { admin:'System Administrator', warden:'Block Warden', student: localStorage.getItem('hostel_user')||'STU001' };
+  const roleNames  = { admin:'Admin User', warden:'Warden (Block A)', student: localStorage.getItem('hostel_user')||'STU001' };
+  const avCls      = { admin:'av-admin', warden:'av-warden', student:'av-student' };
+  document.getElementById('sideAvatar').className   = 'avatar ' + avCls[currentRole];
+  document.getElementById('sideAvatar').textContent = currentRole[0].toUpperCase();
+  document.getElementById('sideUserName').textContent = roleNames[currentRole];
+  document.getElementById('sideUserRole').textContent = { admin:'System Administrator', warden:'Block Warden', student:'Resident Student' }[currentRole];
+  document.getElementById('topRoleBadge').textContent = currentRole.charAt(0).toUpperCase()+currentRole.slice(1);
+  document.getElementById('topRoleBadge').className   = 'role-badge-pill ' + currentRole;
+
+  // show student tabs
+  if(currentRole === 'student'){
+    document.querySelectorAll('.student-only').forEach(el=>{ el.style.display=''; });
+    document.querySelector('.page-tab').style.display='none'; // hide "All Complaints" for student, replaced by Mine
+    showTab('mine', null);
+    return;
+  }
+  updateStats();
+  renderList();
+})();
+
+function updateStats(){
+  const open     = COMPLAINTS.filter(c=>c.status==='open').length;
+  const review   = COMPLAINTS.filter(c=>c.status==='review').length;
+  const resolved = COMPLAINTS.filter(c=>c.status==='resolved').length;
+  const escalated= COMPLAINTS.filter(c=>c.escalated).length;
+  document.getElementById('statOpen').textContent    = open;
+  document.getElementById('statReview').textContent  = review;
+  document.getElementById('statResolved').textContent= resolved;
+  document.getElementById('statEscalated').textContent = escalated;
+  document.getElementById('navBadge').textContent    = open + review;
+}
+
+// ─── TABS ─────────────────────────────────────────
+function showTab(tab, el){
+  document.querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  ['viewList','viewDetail','viewRaise'].forEach(id=>document.getElementById(id).style.display='none');
+  if(tab==='list'||tab==='open'){
+    document.getElementById('viewList').style.display='block';
+    if(tab==='open') document.getElementById('filterStatus').value='open';
+    renderList();
+  } else if(tab==='mine'){
+    document.getElementById('viewList').style.display='block';
+    renderList(true);
+  } else if(tab==='raise'){
+    document.getElementById('viewRaise').style.display='block';
+    document.getElementById('aiPreviewWrap').style.display='none';
+  }
+  currentView = tab;
+}
+
+// ─── RENDER LIST ──────────────────────────────────
+function renderList(mineOnly=false){
+  const q  = (document.getElementById('searchInput').value||'').toLowerCase();
+  const fc = document.getElementById('filterCat').value;
+  const fs = document.getElementById('filterStatus').value;
+  const fu = document.getElementById('filterUrgency').value;
+  const uid = localStorage.getItem('hostel_user')||'STU001';
+
+  let data = COMPLAINTS.filter(c=>{
+    if(mineOnly && c.sid !== uid) return false;
+    if(q  && !c.title.toLowerCase().includes(q) && !c.desc.toLowerCase().includes(q)) return false;
+    if(fc && c.cat !== fc) return false;
+    if(fs && c.status !== fs) return false;
+    if(fu && c.urgency !== fu) return false;
+    return true;
+  });
+
+  const list  = document.getElementById('complaintList');
+  const empty = document.getElementById('listEmpty');
+  if(!data.length){ list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  list.innerHTML = data.map(c=>`
+    <div class="complaint-card ${c.escalated?'escalated':''}" onclick="openDetail('${c.id}')">
+      ${c.escalated?`<div class="escalate-banner" style="margin-bottom:10px"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Escalated — reported ${c.repeatCount} times this month</div>`:''}
+      <div class="cc-top">
+        <div class="cc-left">
+          <div class="cc-cat-icon ${c.cat.toLowerCase()}">${CAT_ICONS[c.cat]}</div>
+          <div>
+            <div class="cc-title">${c.title}</div>
+            <div class="cc-meta">
+              <span>${c.id}</span>
+              <span>·</span>
+              <span>${c.date.split(' ')[0]}</span>
+              <span>·</span>
+              <span>${c.room}</span>
+            </div>
+          </div>
+        </div>
+        <div class="cc-badges">
+          <span class="tag ${c.status}">${c.status==='open'?'Open':c.status==='review'?'Under Review':'Resolved'}</span>
+          <span class="tag ${c.urgency.toLowerCase()}">${c.urgency}</span>
+          <span class="tag ${c.cat.toLowerCase()}">${c.cat}</span>
+          ${c.escalated?'<span class="tag escalated">⚡ Escalated</span>':''}
+        </div>
+      </div>
+      <div class="cc-desc">${c.desc}</div>
+      <div class="cc-bottom">
+        <div class="cc-stu">
+          <div class="mini-av" style="background:${avCol(COMPLAINTS.indexOf(c))}">${initials(c.student)}</div>
+          ${c.student} · ${c.room}
+        </div>
+        <div class="cc-actions" onclick="event.stopPropagation()">
+          <div class="act-btn" onclick="openDetail('${c.id}')">View</div>
+          ${(currentRole==='admin'||currentRole==='warden') && c.status!=='resolved' ? `<div class="act-btn resolve" onclick="quickResolve('${c.id}')">Resolve</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── DETAIL ───────────────────────────────────────
+function openDetail(id){
+  activeComplaintId = id;
+  const c = COMPLAINTS.find(x=>x.id===id);
+  ['viewList','viewDetail','viewRaise'].forEach(el=>document.getElementById(el).style.display='none');
+  document.getElementById('viewDetail').style.display='block';
+
+  document.getElementById('dTitle').textContent = c.title;
+  document.getElementById('dDesc').textContent  = c.desc;
+  document.getElementById('dBadges').innerHTML  = `
+    <span class="tag ${c.status}">${c.status==='open'?'Open':c.status==='review'?'Under Review':'Resolved'}</span>
+    <span class="tag ${c.urgency.toLowerCase()}">${c.urgency} Priority</span>
+    <span class="tag ${c.cat.toLowerCase()}">${c.cat}</span>
+    ${c.escalated?'<span class="tag escalated">⚡ Auto-Escalated</span>':''}
+  `;
+  document.getElementById('dCatIcon').innerHTML = `<div class="cc-cat-icon ${c.cat.toLowerCase()}" style="width:48px;height:48px;border-radius:12px">${CAT_ICONS[c.cat]}</div>`;
+  document.getElementById('dMeta').innerHTML    = `<span>ID: ${c.id}</span><span>Filed: ${c.date}</span><span>By: ${c.student}</span><span>Room: ${c.room}</span>`;
+  document.getElementById('dEscBanner').style.display = c.escalated ? 'flex' : 'none';
+
+  document.getElementById('aiText').textContent = c.aiResp;
+  document.getElementById('aiEta').textContent  = '⏱ ' + c.aiEta;
+  document.getElementById('aiEta').style.background = c.status==='resolved' ? 'rgba(34,197,94,0.1)' : 'rgba(59,130,246,0.1)';
+  document.getElementById('aiEta').style.color = c.status==='resolved' ? 'var(--green)' : 'var(--blue)';
+
+  // resolve card
+  const rc = document.getElementById('resolveCard');
+  if(c.status==='resolved'){
+    rc.innerHTML = `<div class="pcard-title">Resolution Note</div><p style="font-size:13.5px;color:var(--muted);line-height:1.6">${c.resolveNote||'Marked as resolved.'}</p>`;
+  } else {
+    rc.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="pcard-title" style="margin-bottom:0">Resolution</div>
+        <button class="act-btn resolve" id="resolveToggleBtn" onclick="toggleResolveForm()">Mark as Resolved</button>
+      </div>
+      <div class="resolve-form" id="resolveForm">
+        <div class="field-gap" style="margin-top:14px">
+          <label class="form-label">Resolution Note</label>
+          <textarea class="form-input" id="resolveNote" placeholder="Describe what action was taken…"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn-cancel" style="font-size:13px;padding:8px 14px" onclick="toggleResolveForm()">Cancel</button>
+          <button class="btn-save" style="font-size:13px;padding:8px 18px" onclick="submitResolve()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>
+            Confirm Resolved
+          </button>
+        </div>
+      </div>`;
+  }
+
+  // stepper
+  const steps = ['Submitted','Under Review','Resolved'];
+  const stepIdx = c.status==='open'?0:c.status==='review'?1:2;
+  document.getElementById('stepperEl').innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:0">
+      ${steps.map((s,i)=>`
+        <div style="flex:1;text-align:center">
+          <div style="display:flex;align-items:center">
+            <div class="step-dot ${i<stepIdx?'done':i===stepIdx?'active':'pending'}">
+              ${i<stepIdx?'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>':
+                i===stepIdx?'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>':
+                '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/></svg>'}
+            </div>
+            ${i<steps.length-1?`<div class="step-line ${i<stepIdx?'done':''}"></div>`:''}
+          </div>
+          <div class="step-label ${i<stepIdx?'done':i===stepIdx?'active':''}">${s}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  // timeline
+  document.getElementById('detailTimeline').innerHTML = c.log.map(l=>`
+    <div class="tl-item">
+      <div class="tl-dot ${l.type}">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          ${l.type==='green'?'<polyline points="20 6 9 17 4 12"/>':
+            l.type==='amber'?'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>':
+            l.type==='red'?'<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>':
+            l.type==='purple'?'<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>':
+            '<circle cx="12" cy="12" r="10"/>'}
+        </svg>
+      </div>
+      <div style="flex:1;padding-top:4px">
+        <div class="tl-title">${l.label}</div>
+        <div class="tl-time">${l.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function backToList(){
+  document.getElementById('viewDetail').style.display='none';
+  document.getElementById('viewList').style.display='block';
+}
+
+function toggleResolveForm(){
+  const f = document.getElementById('resolveForm');
+  f.classList.toggle('show');
+}
+
+function submitResolve(){
+  const note = document.getElementById('resolveNote').value.trim() || 'Issue has been resolved by the warden.';
+  document.getElementById('resolveOverlay').classList.add('show');
+  document.getElementById('resolveOverlay').dataset.note = note;
+}
+
+function confirmResolve(){
+  const c = COMPLAINTS.find(x=>x.id===activeComplaintId);
+  const note = document.getElementById('resolveOverlay').dataset.note || 'Resolved.';
+  c.status = 'resolved';
+  c.resolveNote = note;
+  c.aiEta = 'Resolved';
+  c.log.push({ type:'green', label:'Resolved: ' + note, time:'Now' });
+  document.getElementById('resolveOverlay').classList.remove('show');
+  updateStats();
+  openDetail(activeComplaintId);
+  showToast('Complaint Resolved', 'Student has been notified.');
+}
+
+function quickResolve(id){
+  activeComplaintId = id;
+  document.getElementById('resolveOverlay').dataset.note = 'Marked resolved by ' + currentRole + '.';
+  document.getElementById('resolveOverlay').classList.add('show');
+}
+
+// ─── RAISE COMPLAINT ──────────────────────────────
+function selectCat(el){
+  document.querySelectorAll('.cat-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedCat = el.dataset.cat;
+}
+
+function previewPhoto(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('photoPreview');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitComplaint(){
+  const title = document.getElementById('cTitle').value.trim();
+  const desc  = document.getElementById('cDesc').value.trim();
+  if(!title || !desc){ showToast('Missing Fields','Please add a title and description.'); return; }
+
+  // show AI loading
+  document.getElementById('aiPreviewWrap').style.display='block';
+  document.getElementById('aiLoadingDots').style.display='flex';
+  document.getElementById('aiPreviewText').style.display='none';
+  document.getElementById('aiPreviewEta').style.display='none';
+  document.getElementById('raiseActions').style.display='none';
+  document.getElementById('aiPreviewWrap').scrollIntoView({behavior:'smooth', block:'center'});
+
+  // call Claude API
+  let aiReply = '';
+  let etaText = '';
+  try {
+    const prompt = `You are HostelBot, an AI assistant for a college hostel management system.
+A student just submitted a complaint. Read it carefully and respond with:
+1. A warm, helpful acknowledgement (2-3 sentences)
+2. Confirm the category: ${selectedCat}
+3. Assign urgency: High / Medium / Low based on the issue
+4. Give a realistic estimated resolution time
+
+Complaint Title: "${title}"
+Description: "${desc}"
+Category: ${selectedCat}
+
+Reply in this exact format (no markdown, no bullet points):
+RESPONSE: [your acknowledgement text here]
+URGENCY: [High/Medium/Low]
+ETA: [e.g. "Expected resolution: within 24 hours"]`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:300,
+        messages:[{ role:'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const raw  = data.content?.map(b=>b.text||'').join('') || '';
+    const respMatch = raw.match(/RESPONSE:\s*(.+?)(?=URGENCY:|$)/s);
+    const etaMatch  = raw.match(/ETA:\s*(.+)/);
+    const urgMatch  = raw.match(/URGENCY:\s*(High|Medium|Low)/i);
+    aiReply = respMatch ? respMatch[1].trim() : raw.trim() || 'Your complaint has been received and logged. The relevant team will be notified shortly.';
+    etaText = etaMatch  ? etaMatch[1].trim()  : 'Expected resolution: within 48 hours';
+    var urgency = urgMatch ? urgMatch[1] : 'Medium';
+  } catch(e) {
+    aiReply = `Your complaint about "${title}" has been logged and categorised under ${selectedCat}. The warden and maintenance team will be notified. Thank you for reporting this issue.`;
+    etaText = 'Expected resolution: within 48 hours';
+    var urgency = 'Medium';
+  }
+
+  // show AI response
+  document.getElementById('aiLoadingDots').style.display='none';
+  document.getElementById('aiPreviewText').textContent = aiReply;
+  document.getElementById('aiPreviewText').style.display='block';
+  document.getElementById('aiPreviewEta').textContent = '⏱ ' + etaText;
+  document.getElementById('aiPreviewEta').style.display='inline-flex';
+
+  // add to data
+  const uid = localStorage.getItem('hostel_user')||'STU001';
+  const stuName = { STU001:'Aarav Mehta', STU002:'Priya Sharma', STU003:'Rahul Gupta', STU004:'Sneha Patel', STU005:'Dev Kumar', STU006:'Ananya Singh', STU007:'Kabir Joshi', STU008:'Meera Iyer' }[uid] || 'Student';
+  const stuRoom = { STU001:'A-201', STU002:'B-305', STU003:'A-102', STU004:'C-210', STU005:'D-101', STU006:'B-201', STU007:'A-310', STU008:'C-105' }[uid] || 'Unknown';
+  const location = document.getElementById('cLocation').value || stuRoom;
+  const repeatCount = COMPLAINTS.filter(c=>c.cat===selectedCat && c.sid===uid).length + 1;
+  const escalated   = repeatCount >= 3;
+  const now = new Date().toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  const newId = 'CMP' + String(COMPLAINTS.length+1).padStart(3,'0');
+  const newC = {
+    id: newId, cat: selectedCat, title, desc, status:'open', urgency,
+    student: stuName, sid: uid, room: location,
+    date: new Date().toISOString().slice(0,16).replace('T',' '),
+    escalated, repeatCount, aiResp: aiReply, aiEta: etaText,
+    log:[
+      { type:'blue',   label:'Complaint submitted', time: now },
+      { type:'purple', label:`AI: Categorised as ${selectedCat} · Urgency ${urgency}`, time: now },
+      ...(escalated ? [{ type:'red', label:`Auto-escalated: ${repeatCount}rd report this month`, time: now }] : [])
+    ]
+  };
+  COMPLAINTS.unshift(newC);
+  updateStats();
+
+  // reset form after delay
+  setTimeout(()=>{
+    document.getElementById('cTitle').value='';
+    document.getElementById('cDesc').value='';
+    document.getElementById('cLocation').value='';
+    document.getElementById('photoPreview').style.display='none';
+    document.getElementById('aiPreviewWrap').style.display='none';
+    document.getElementById('raiseActions').style.display='flex';
+    showToast('Complaint Submitted', 'HostelBot has acknowledged your issue.');
+    if(currentRole==='student') showTab('mine', null);
+    else showTab('list', document.querySelector('.page-tab'));
+  }, 3000);
+}
+
+// ─── SEARCH ───────────────────────────────────────
+function renderList(mineOnly){ 
+  // re-call main renderList with mine flag
+  const q  = (document.getElementById('searchInput').value||'').toLowerCase();
+  const fc = document.getElementById('filterCat').value;
+  const fs = document.getElementById('filterStatus').value;
+  const fu = document.getElementById('filterUrgency').value;
+  const uid = localStorage.getItem('hostel_user')||'STU001';
+  const isMine = mineOnly || currentView==='mine';
+
+  let data = COMPLAINTS.filter(c=>{
+    if(isMine && c.sid !== uid) return false;
+    if(q  && !c.title.toLowerCase().includes(q) && !c.desc.toLowerCase().includes(q)) return false;
+    if(fc && c.cat !== fc) return false;
+    if(fs && c.status !== fs) return false;
+    if(fu && c.urgency !== fu) return false;
+    return true;
+  });
+
+  const list  = document.getElementById('complaintList');
+  const empty = document.getElementById('listEmpty');
+  if(!data.length){ list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  list.innerHTML = data.map(c=>`
+    <div class="complaint-card ${c.escalated?'escalated':''}" onclick="openDetail('${c.id}')">
+      ${c.escalated?`<div class="escalate-banner" style="margin-bottom:10px"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Escalated — reported ${c.repeatCount} times this month</div>`:''}
+      <div class="cc-top">
+        <div class="cc-left">
+          <div class="cc-cat-icon ${c.cat.toLowerCase()}">${CAT_ICONS[c.cat]}</div>
+          <div>
+            <div class="cc-title">${c.title}</div>
+            <div class="cc-meta"><span>${c.id}</span><span>·</span><span>${c.date.split(' ')[0]}</span><span>·</span><span>${c.room}</span></div>
+          </div>
+        </div>
+        <div class="cc-badges">
+          <span class="tag ${c.status}">${c.status==='open'?'Open':c.status==='review'?'Under Review':'Resolved'}</span>
+          <span class="tag ${c.urgency.toLowerCase()}">${c.urgency}</span>
+          <span class="tag ${c.cat.toLowerCase()}">${c.cat}</span>
+          ${c.escalated?'<span class="tag escalated">⚡ Escalated</span>':''}
+        </div>
+      </div>
+      <div class="cc-desc">${c.desc}</div>
+      <div class="cc-bottom">
+        <div class="cc-stu">
+          <div class="mini-av" style="background:${avCol(COMPLAINTS.indexOf(c))}">${initials(c.student)}</div>
+          ${c.student} · ${c.room}
+        </div>
+        <div class="cc-actions" onclick="event.stopPropagation()">
+          <div class="act-btn" onclick="openDetail('${c.id}')">View</div>
+          ${(currentRole==='admin'||currentRole==='warden') && c.status!=='resolved'?`<div class="act-btn resolve" onclick="quickResolve('${c.id}')">Resolve</div>`:''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── TOAST ────────────────────────────────────────
+function showToast(title, sub){
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastSub').textContent   = sub;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
