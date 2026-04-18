@@ -40,7 +40,7 @@
   .topbar { padding:18px 30px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:50; }
   .topbar h1 { font-family:'Syne',sans-serif; font-size:17px; font-weight:700; }
   .topbar p { font-size:12px; color:var(--muted); margin-top:2px; }
-  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; position:relative; }
   .icon-btn { width:36px; height:36px; border-radius:9px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; transition:all 0.15s; }
   .icon-btn:hover { border-color:var(--border2); }
   .icon-btn svg { width:16px; height:16px; color:var(--muted); }
@@ -50,7 +50,7 @@
   .content { padding:26px 30px; }
 
   /* ── STATS ── */
-  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px; }
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-bottom:26px; }
   .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; position:relative; overflow:hidden; }
   .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:14px 14px 0 0; }
   .stat-card.blue::before   { background:var(--blue); }
@@ -81,12 +81,12 @@
   .card-link  { font-size:12px; color:var(--accent); cursor:pointer; text-decoration:none; }
 
   /* ── LAYOUT ── */
-  .two-col   { display:grid; grid-template-columns:1fr 1fr;   gap:18px; margin-bottom:20px; }
+  .two-col   { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr));   gap:18px; margin-bottom:20px; }
   .three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:20px; }
   .mb { margin-bottom:20px; }
 
   /* ── REPORT SELECTOR ── */
-  .report-selector { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:26px; }
+  .report-selector { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; margin-bottom:26px; }
   .report-card {
     background:var(--surface); border:1px solid var(--border); border-radius:14px;
     padding:18px 16px; cursor:pointer; transition:all 0.18s; text-align:center;
@@ -214,6 +214,8 @@
   .section-label { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:0 0 14px; display:flex; align-items:center; gap:8px; }
   .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
   .divider { height:1px; background:var(--border); margin:16px 0; }
+
+  @media (max-width:768px){.sidebar{position:relative;width:100%;height:auto;}.main{margin-left:0;}.content{padding:16px;}.topbar{padding:14px 16px;}}
 </style>
 </head>
 <body>
@@ -279,10 +281,11 @@
       <p>Full hostel overview · Generate, view &amp; export all reports</p>
     </div>
     <div class="topbar-right">
-      <div class="icon-btn">
+      <div class="icon-btn" id="notifBtn" onclick="toggleNotif()" role="button" aria-label="Notifications">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-        <div class="notif-dot"></div>
+        <div class="notif-dot" id="notifDot"></div>
       </div>
+      <div class="notif-panel" id="notifPanel" role="dialog" style="display:none;position:absolute;top:44px;right:0;width:260px;background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:200;font-size:12px">Notifications panel</div>
       <span class="role-badge">Admin</span>
     </div>
   </div>
@@ -499,6 +502,80 @@ const reportHistory = [
   {type:'attendance',label:'Attendance Report — February 2026',date:'Mar 1, 2026',color:'blue'},
 ];
 
+
+// ══════════════════════════════════════════
+// FIX #5: Load from students.json
+// Fetches real student data and merges it
+// into the page arrays so there's one
+// source of truth. Falls back to hardcoded
+// data if the fetch fails (e.g. opened as
+// a local file without a server).
+// ══════════════════════════════════════════
+async function loadStudentsFromJSON() {
+  try {
+    const res = await fetch('students.json');
+    if (!res.ok) throw new Error('fetch failed');
+    const jsonStudents = await res.json();
+
+    // Map students.json fields into attendanceData format
+    // students.json has: id(roll), name, room, block, status
+    // We generate attendance % and score from status for demo purposes
+    const statusToAtt = { active: 87, pending: 72, inactive: 55 };
+    attendanceData.length = 0;
+    jsonStudents.forEach((s, i) => {
+      const pct = statusToAtt[s.status] ?? 80;
+      attendanceData.push({
+        id:    s.roll,
+        name:  s.name,
+        room:  parseInt(s.room),
+        block: s.block,
+        pct,
+        score: +(pct / 10).toFixed(1)
+      });
+    });
+
+    // Map into feeData — use real names/rooms from JSON
+    feeData.length = 0;
+    jsonStudents.forEach((s, i) => {
+      // Spread paid/unpaid across students for realism
+      const paid   = s.status === 'active' ? 18050 : s.status === 'pending' ? 0 : 9000;
+      const status = s.status === 'active' ? 'paid' : s.status === 'pending' ? 'pending' : 'partial';
+      feeData.push({
+        id:     s.roll,
+        name:   s.name,
+        room:   parseInt(s.room),
+        block:  s.block,
+        amount: 18050,
+        paid,
+        status
+      });
+    });
+
+    // Rebuild leaderboard from loaded attendance data (sorted by score)
+    leaderboardData.length = 0;
+    [...attendanceData]
+      .sort((a,b) => b.score - a.score)
+      .slice(0, 10)
+      .forEach((s, i) => {
+        const colors = ['#3b82f6','#6c63ff','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#10b981','#f97316','#ec4899'];
+        leaderboardData.push({ rank: i+1, name: s.name, room: s.room, block: s.block, score: s.score, attendance: s.pct, color: colors[i] });
+      });
+
+    // Update complaints to reference real student names
+    complaintData.forEach((c, i) => {
+      if (jsonStudents[i]) {
+        c.student = jsonStudents[i].roll + ' — ' + jsonStudents[i].name;
+      }
+    });
+
+    console.log('✅ Loaded', jsonStudents.length, 'students from students.json');
+  } catch (e) {
+    console.warn('⚠️ Could not load students.json — using built-in demo data.', e.message);
+  }
+  // Render after data is ready (loaded or fallback)
+  renderReport();
+}
+
 // ══════════════════════════════════════════
 // REPORT TYPE SELECTOR
 // ══════════════════════════════════════════
@@ -630,7 +707,7 @@ function renderComplaints(panel) {
   panel.innerHTML = `
     <div style="padding:20px">
       <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">Category Breakdown</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:20px">
         ${[
           {key:'washroom',label:'Washroom',color:'var(--blue)',  cls:'cat-wash'},
           {key:'mess',    label:'Mess/Food',color:'var(--amber)', cls:'cat-mess'},
@@ -765,7 +842,7 @@ function showToast(msg, type='info') {
 // ══════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════
-function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
 
 // ══════════════════════════════════════════
 // INIT
@@ -773,6 +850,10 @@ function logout() { localStorage.clear(); window.location.href = 'index.html'; }
 generateReport();
 renderComplaintAnalytics();
 renderReportHistory();
+
+  let notifOpen=false;
+  function toggleNotif(){notifOpen=!notifOpen;const p=document.getElementById("notifPanel");if(p)p.style.display=notifOpen?"block":"none";}
+  document.addEventListener("click",e=>{if(!e.target.closest("#notifBtn")&&!e.target.closest("#notifPanel")){if(notifOpen){const p=document.getElementById("notifPanel");if(p)p.style.display="none";notifOpen=false;}}});
 </script>
 </body>
 </html>

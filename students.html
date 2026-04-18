@@ -45,7 +45,7 @@
   .topbar { padding:16px 30px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:50; }
   .topbar-left h1 { font-family:'Syne',sans-serif; font-size:17px; font-weight:700; }
   .topbar-left p { font-size:12px; color:var(--muted); margin-top:2px; }
-  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; position:relative; }
   .icon-btn { width:36px; height:36px; border-radius:9px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
   .icon-btn svg { width:16px; height:16px; color:var(--muted); }
   .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; background:var(--red); border-radius:50%; border:2px solid var(--surface); }
@@ -80,7 +80,7 @@
   .btn-ghost:hover { background:var(--surface2); color:var(--text); }
 
   /* ── STATS ROW ── */
-  .stats-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px; }
+  .stats-strip { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; margin-bottom:22px; }
   .strip-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; position:relative; overflow:hidden; }
   .strip-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:12px 12px 0 0; }
   .strip-card.blue::after { background:var(--blue); }
@@ -202,7 +202,7 @@
   .tl-time { font-size:11px; color:var(--muted); margin-top:2px; }
 
   /* ── ADD STUDENT FORM ── */
-  .form-layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-layout { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
   .form-layout.full { grid-template-columns:1fr; }
   .form-field { margin-bottom:0; }
   .form-field label { display:block; font-size:12px; color:var(--muted); margin-bottom:7px; font-weight:500; letter-spacing:0.2px; }
@@ -255,6 +255,8 @@
   ::-webkit-scrollbar { width:5px; height:5px; }
   ::-webkit-scrollbar-track { background:transparent; }
   ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:999px; }
+
+  @media (max-width:768px){.sidebar{position:relative;width:100%;height:auto;}.main{margin-left:0;}.content{padding:16px;}.topbar{padding:14px 16px;}}
 </style>
 </head>
 <body class="role-admin" id="bodyEl">
@@ -278,33 +280,33 @@
       <span class="nav-badge blue">342</span>
     </div>
     <div class="nav-section">Modules</div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="window.location.href='complaints.html'" style="cursor:pointer">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>
       Complaints
       <span class="nav-badge red">8</span>
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="window.location.href='rooms.html'" style="cursor:pointer">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       Room Allocation
     </div>
-    <div class="nav-item">
+    <div class="nav-item" style="cursor:default;opacity:0.5" title="Coming soon">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77"/></svg>
       Mess Management
     </div>
-    <div class="nav-item">
+    <div class="nav-item" style="cursor:default;opacity:0.5" title="Coming soon">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       Attendance
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="window.location.href='fees.html'" style="cursor:pointer">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
       Fee Management
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="window.location.href='admin.html'" style="cursor:pointer">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Reports
     </div>
     <div class="nav-section">System</div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="window.location.href='admin.html'" style="cursor:pointer">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
       Settings
     </div>
@@ -345,7 +347,7 @@
       </div>
       <div class="icon-btn">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-        <div class="notif-dot"></div>
+        <div class="notif-dot" id="notifDot"></div>
       </div>
       <div class="role-badge-pill admin" id="topRoleBadge">Admin</div>
     </div>
@@ -666,37 +668,377 @@
 </div>
 
 <script>
-    let STUDENTS = [];
+// ─── DATA ───────────────────────────────────────
+const AVATAR_COLORS = [
+  ['#3b82f6','#06b6d4'],['#6c63ff','#a78bfa'],['#f59e0b','#f97316'],
+  ['#22c55e','#10b981'],['#ef4444','#f97316'],['#8b5cf6','#ec4899']
+];
+function avColor(i){ return `linear-gradient(135deg,${AVATAR_COLORS[i%AVATAR_COLORS.length].join(',')})`; }
+function initials(n){ return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
 
-    async function init() {
-        if (!['admin', 'warden'].includes(localStorage.getItem('hostel_role'))) {
-            window.location.href = 'index.html';
-        }
-        
-        try {
-            const response = await fetch('/api/students');
-            STUDENTS = await response.json();
-            renderTable();
-        } catch (err) {
-            console.error("Failed to fetch students:", err);
-        }
-    }
+const STUDENTS = [
+  { id:'STU001', name:'Aarav Mehta',    roll:'2024CS001', room:'A-201', block:'A', floor:'2', mess:'Veg',     contact:'+91 98001 11001', parent:'+91 98001 11002', email:'aarav@clg.edu',   admit:'2024-07-15', status:'Active',  course:'B.Tech CSE', year:'1st Year' },
+  { id:'STU002', name:'Priya Sharma',   roll:'2024EC002', room:'B-305', block:'B', floor:'3', mess:'Non-Veg', contact:'+91 98001 22001', parent:'+91 98001 22002', email:'priya@clg.edu',   admit:'2024-07-15', status:'Active',  course:'B.Tech ECE', year:'1st Year' },
+  { id:'STU003', name:'Rahul Gupta',    roll:'2023ME003', room:'A-102', block:'A', floor:'1', mess:'Both',    contact:'+91 98001 33001', parent:'+91 98001 33002', email:'rahul@clg.edu',   admit:'2023-08-01', status:'Active',  course:'B.Tech ME',  year:'2nd Year' },
+  { id:'STU004', name:'Sneha Patel',    roll:'2023CS004', room:'C-210', block:'C', floor:'2', mess:'Veg',     contact:'+91 98001 44001', parent:'+91 98001 44002', email:'sneha@clg.edu',   admit:'2023-08-01', status:'Active',  course:'B.Tech CSE', year:'2nd Year' },
+  { id:'STU005', name:'Dev Kumar',      roll:'2022EE005', room:'D-101', block:'D', floor:'1', mess:'Non-Veg', contact:'+91 98001 55001', parent:'+91 98001 55002', email:'dev@clg.edu',     admit:'2022-07-20', status:'Active',  course:'B.Tech EE',  year:'3rd Year' },
+  { id:'STU006', name:'Ananya Singh',   roll:'2024CS006', room:'B-201', block:'B', floor:'2', mess:'Veg',     contact:'+91 98001 66001', parent:'+91 98001 66002', email:'ananya@clg.edu',  admit:'2024-07-15', status:'Pending', course:'B.Tech CSE', year:'1st Year' },
+  { id:'STU007', name:'Kabir Joshi',    roll:'2022CS007', room:'A-310', block:'A', floor:'3', mess:'Both',    contact:'+91 98001 77001', parent:'+91 98001 77002', email:'kabir@clg.edu',   admit:'2022-07-20', status:'Active',  course:'B.Tech CSE', year:'3rd Year' },
+  { id:'STU008', name:'Meera Iyer',     roll:'2023EC008', room:'C-105', block:'C', floor:'1', mess:'Veg',     contact:'+91 98001 88001', parent:'+91 98001 88002', email:'meera@clg.edu',   admit:'2023-08-01', status:'Active',  course:'B.Tech ECE', year:'2nd Year' },
+];
 
-    function renderTable() {
-        const tbody = document.getElementById('studentTableBody');
-        tbody.innerHTML = STUDENTS.map(s => `
-            <tr>
-                <td>${s.id}</td>
-                <td><strong>${s.name}</strong></td>
-                <td>${s.roll}</td>
-                <td>Room ${s.room}</td>
-                <td><span class="status-pill ${s.status}">${s.status}</span></td>
-                <td>${s.contact}</td>
-            </tr>
-        `).join('');
-    }
+const MESS_MENU = {
+  Veg: {
+    Mon:  { B:'Idli Sambar', L:'Dal Rice', D:'Roti Paneer' },
+    Tue:  { B:'Poha Jalebi', L:'Chole Bhature', D:'Khichdi' },
+    Wed:  { B:'Upma', L:'Mix Veg Rice', D:'Roti Dal Makhani' },
+    Thu:  { B:'Dosa', L:'Rajma Chawal', D:'Puri Sabzi' },
+    Fri:  { B:'Paratha', L:'Kadhi Chawal', D:'Pasta' },
+    Sat:  { B:'Vada Pav', L:'Biryani', D:'Roti Aloo' },
+    Sun:  { B:'Chole Puri', L:'Pulao Raita', D:'Roti Chana' },
+  },
+  'Non-Veg': {
+    Mon:  { B:'Egg Bhurji', L:'Chicken Rice', D:'Mutton Curry' },
+    Tue:  { B:'Omelette', L:'Fish Curry Rice', D:'Chicken Roti' },
+    Wed:  { B:'Egg Toast', L:'Keema Rice', D:'Egg Curry' },
+    Thu:  { B:'Boiled Eggs', L:'Chicken Biryani', D:'Fish Fry' },
+    Fri:  { B:'Egg Sandwich', L:'Mutton Rice', D:'Chicken Masala' },
+    Sat:  { B:'Omelette', L:'Biryani Special', D:'Roti Keema' },
+    Sun:  { B:'Egg Bhurji', L:'Chicken Pulao', D:'Fish Curry' },
+  },
+  Both: {
+    Mon:  { B:'Idli / Egg', L:'Dal Rice + Chicken', D:'Roti Paneer / Mutton' },
+    Tue:  { B:'Poha / Omelette', L:'Chole / Fish', D:'Khichdi / Egg Curry' },
+    Wed:  { B:'Upma / Egg Toast', L:'Veg Rice / Chicken', D:'Dal Makhani / Keema' },
+    Thu:  { B:'Dosa / Boiled Egg', L:'Rajma / Biryani', D:'Puri Sabzi / Fish Fry' },
+    Fri:  { B:'Paratha / Omelette', L:'Kadhi Rice / Mutton', D:'Pasta / Chicken' },
+    Sat:  { B:'Vada / Egg', L:'Biryani', D:'Roti Aloo / Keema' },
+    Sun:  { B:'Chole Puri / Egg', L:'Pulao / Chicken', D:'Chana / Fish Curry' },
+  }
+};
 
-    window.onload = init;
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const TODAY_IDX = (new Date().getDay() + 6) % 7;
+
+const ACTIVITY = [
+  { type:'blue',   icon:'room',   title:'Room assigned: A-201',             time:'15 Jul 2024 · 10:30 AM' },
+  { type:'green',  icon:'check',  title:'Mess preference set to Veg',       time:'15 Jul 2024 · 10:35 AM' },
+  { type:'amber',  icon:'edit',   title:'Contact details updated',          time:'18 Jul 2024 · 2:00 PM' },
+  { type:'purple', icon:'star',   title:'Profile completed 100%',           time:'20 Jul 2024 · 9:00 AM' },
+];
+
+// ─── STATE ────────────────────────────────────────
+// Redirect students to their own profile page
+  if (sessionStorage.getItem('hostel_role') === 'student') {
+    window.location.href = 'profile-student.html';
+  }
+  let currentRole = sessionStorage.getItem('hostel_role') || 'admin';
+let currentView = 'table';
+let filteredData = [...STUDENTS];
+let profileIdx  = 0;
+let editField   = '';
+
+// ─── INIT ─────────────────────────────────────────
+(function init(){
+  // role UI
+  const body = document.getElementById('bodyEl');
+  body.className = 'role-' + currentRole;
+  const roleLabels = { admin:'System Administrator', warden:'Block Warden', student:'Student' };
+  const roleNames  = { admin:'Admin User', warden:'Warden (Block A)', student: sessionStorage.getItem('hostel_user') || 'STU001' };
+  const avClasses  = { admin:'av-admin', warden:'av-warden', student:'av-student' };
+  document.getElementById('sideAvatar').className   = 'avatar ' + avClasses[currentRole];
+  document.getElementById('sideAvatar').textContent = currentRole[0].toUpperCase();
+  document.getElementById('sideUserName').textContent = roleNames[currentRole];
+  document.getElementById('sideUserRole').textContent = roleLabels[currentRole];
+  document.getElementById('topRoleBadge').textContent = currentRole.charAt(0).toUpperCase()+currentRole.slice(1);
+  document.getElementById('topRoleBadge').className  = 'role-badge-pill ' + currentRole;
+
+  // If student, filter to own profile only
+  if(currentRole === 'student'){
+    const uid = sessionStorage.getItem('hostel_user') || 'STU001';
+    filteredData = STUDENTS.filter(s => s.id === uid);
+    // hide add btn, filters, etc
+    document.getElementById('searchInput').disabled = true;
+    document.getElementById('filterMess').disabled = true;
+    document.getElementById('filterBlock').disabled = true;
+    document.getElementById('filterFloor').disabled = true;
+    // auto-open profile
+    setTimeout(()=>openProfile(0), 100);
+    return;
+  }
+  renderTable();
+  renderGrid();
+  setAdmitDefault();
+})();
+
+function setAdmitDefault(){
+  const d = document.getElementById('fAdmit');
+  if(d) d.value = new Date().toISOString().split('T')[0];
+}
+
+// ─── VIEW SWITCHING ───────────────────────────────
+function switchView(v){
+  currentView = v;
+  ['tableView','gridView','profileView','addView'].forEach(id => document.getElementById(id).style.display='none');
+  document.getElementById('tabTable').classList.remove('active');
+  document.getElementById('tabGrid').classList.remove('active');
+  if(v==='table'){ document.getElementById('tableView').style.display='block'; document.getElementById('tabTable').classList.add('active'); }
+  if(v==='grid'){  document.getElementById('gridView').style.display='block';  document.getElementById('tabGrid').classList.add('active'); }
+  if(v==='profile'){ document.getElementById('profileView').style.display='block'; }
+  if(v==='add'){     document.getElementById('addView').style.display='block'; }
+}
+
+function goBack(){
+  if(currentRole==='student') switchView('profile');
+  else if(currentView==='profile'||currentView==='add') switchView('table');
+  else switchView('table');
+}
+
+// ─── RENDER TABLE ─────────────────────────────────
+function renderTable(){
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('tableEmpty');
+  if(!filteredData.length){ tbody.innerHTML=''; empty.style.display='block'; document.getElementById('tableCount').textContent='No students found'; return; }
+  empty.style.display='none';
+  document.getElementById('tableCount').textContent=`Showing ${filteredData.length} of ${STUDENTS.length} students`;
+  tbody.innerHTML = filteredData.map((s,i)=>`
+    <tr onclick="openProfile(${STUDENTS.indexOf(s)})">
+      <td>
+        <div class="stu-cell">
+          <div class="stu-av" style="background:${avColor(STUDENTS.indexOf(s))}">${initials(s.name)}</div>
+          <div><div class="stu-name">${s.name}</div><div class="stu-roll">${s.roll}</div></div>
+        </div>
+      </td>
+      <td>${s.room}</td>
+      <td>Block ${s.block} · Floor ${s.floor}</td>
+      <td><span class="tag ${s.mess==='Veg'?'veg':s.mess==='Non-Veg'?'nonveg':'both'}">${s.mess}</span></td>
+      <td style="font-size:12.5px;color:var(--muted)">${s.contact}</td>
+      <td><span class="tag ${s.status.toLowerCase()}">${s.status}</span></td>
+      <td onclick="event.stopPropagation()">
+        <div class="action-cell">
+          <div class="act-btn view" title="View profile" onclick="openProfile(${STUDENTS.indexOf(s)})">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div class="act-btn edit warden-only" title="Edit" onclick="openProfile(${STUDENTS.indexOf(s)})">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <div class="act-btn del admin-only" title="Delete" onclick="confirmDelete(${STUDENTS.indexOf(s)})">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+          </div>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ─── RENDER GRID ──────────────────────────────────
+function renderGrid(){
+  const grid  = document.getElementById('gridBody');
+  const empty = document.getElementById('gridEmpty');
+  if(!filteredData.length){ grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  grid.innerHTML = filteredData.map((s)=>`
+    <div class="stu-card" onclick="openProfile(${STUDENTS.indexOf(s)})">
+      <div class="stu-card-top">
+        <div class="stu-card-av" style="background:${avColor(STUDENTS.indexOf(s))}">${initials(s.name)}</div>
+        <div><div class="stu-card-name">${s.name}</div><div class="stu-card-roll">${s.roll}</div></div>
+      </div>
+      <div class="stu-card-divider"></div>
+      <div class="stu-card-row"><span class="stu-card-key">Room</span><span class="stu-card-val">${s.room}</span></div>
+      <div class="stu-card-row"><span class="stu-card-key">Block</span><span class="stu-card-val">Block ${s.block}, Floor ${s.floor}</span></div>
+      <div class="stu-card-row"><span class="stu-card-key">Mess</span><span class="tag ${s.mess==='Veg'?'veg':s.mess==='Non-Veg'?'nonveg':'both'}" style="font-size:10px">${s.mess}</span></div>
+      <div class="stu-card-row"><span class="stu-card-key">Status</span><span class="tag ${s.status.toLowerCase()}" style="font-size:10px">${s.status}</span></div>
+    </div>
+  `).join('');
+}
+
+// ─── OPEN PROFILE ─────────────────────────────────
+function openProfile(idx){
+  profileIdx = idx;
+  const s = STUDENTS[idx];
+  document.getElementById('pAvatar').textContent = initials(s.name);
+  document.getElementById('pAvatar').style.background = avColor(idx);
+  document.getElementById('pName').textContent    = s.name;
+  document.getElementById('pRoll').textContent    = s.roll + ' · ' + s.course + ' · ' + s.year;
+  document.getElementById('pRoom').textContent    = s.room;
+  document.getElementById('pBlock').textContent   = 'Block ' + s.block;
+  document.getElementById('pFloor').textContent   = 'Floor ' + s.floor;
+  document.getElementById('pMess').textContent    = s.mess;
+  document.getElementById('pContact').textContent = s.contact;
+  document.getElementById('pParent').textContent  = s.parent;
+  document.getElementById('pEmail').textContent   = s.email;
+  document.getElementById('pAdmit').textContent   = new Date(s.admit).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  const stEl = document.getElementById('pStatus');
+  stEl.textContent  = s.status;
+  stEl.className    = 'tag ' + s.status.toLowerCase();
+  const messTag = document.getElementById('pMessTag');
+  messTag.textContent = s.mess;
+  messTag.className   = 'tag ' + (s.mess==='Veg'?'veg':s.mess==='Non-Veg'?'nonveg':'both');
+  renderMessMenu(s.mess);
+  renderActivity();
+  switchView('profile');
+}
+
+function renderMessMenu(pref){
+  const menu = MESS_MENU[pref] || MESS_MENU['Veg'];
+  const grid = document.getElementById('messGrid');
+  grid.innerHTML = DAYS.map((d,di)=>`
+    <div class="mess-day">
+      <div class="mess-day-name ${di===TODAY_IDX?'today':''}">${d}</div>
+      ${['B','L','D'].map(m=>`
+        <div class="mess-slot ${di===TODAY_IDX?'today-slot':''}">
+          <div class="mess-slot-label">${m==='B'?'BF':m==='L'?'Lunch':'Dinner'}</div>
+          <div class="mess-slot-item">${menu[d][m]}</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderActivity(){
+  const icons = {
+    room: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>`,
+    check:`<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`,
+    edit: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+    star: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
+  };
+  document.getElementById('activityTimeline').innerHTML = ACTIVITY.map(a=>`
+    <div class="tl-item">
+      <div class="tl-dot ${a.type}">${icons[a.icon]}</div>
+      <div class="tl-content">
+        <div class="tl-title">${a.title}</div>
+        <div class="tl-time">${a.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── SEARCH / FILTER ──────────────────────────────
+function doSearch(){
+  const q  = document.getElementById('searchInput').value.toLowerCase();
+  const m  = document.getElementById('filterMess').value;
+  const bl = document.getElementById('filterBlock').value;
+  const fl = document.getElementById('filterFloor').value;
+  filteredData = STUDENTS.filter(s =>
+    (!q  || s.name.toLowerCase().includes(q) || s.roll.toLowerCase().includes(q) || s.room.toLowerCase().includes(q)) &&
+    (!m  || s.mess === m) &&
+    (!bl || s.block === bl) &&
+    (!fl || s.floor === fl)
+  );
+  renderTable();
+  renderGrid();
+}
+
+// ─── ADD STUDENT ──────────────────────────────────
+function updateRooms(){
+  const bl = document.getElementById('fBlock').value;
+  const fl = document.getElementById('fFloor').value;
+  const sel = document.getElementById('fRoom');
+  if(!bl||!fl){ sel.innerHTML='<option value="">Select block & floor first</option>'; return; }
+  const rooms = Array.from({length:10},(_,i)=>`${bl}-${fl}${String(i+1).padStart(2,'0')}`);
+  sel.innerHTML = rooms.map(r=>`<option>${r}</option>`).join('');
+}
+
+function saveStudent(){
+  const name=document.getElementById('fName').value.trim();
+  const roll=document.getElementById('fRoll').value.trim();
+  const room=document.getElementById('fRoom').value;
+  const mess=document.getElementById('fMess').value;
+  if(!name||!roll||!room||!mess){ showToast('Missing Fields','Please fill all required fields.','error'); return; }
+  const newStu = {
+    id:'STU'+String(STUDENTS.length+1).padStart(3,'0'),
+    name, roll,
+    room, block:document.getElementById('fBlock').value,
+    floor:document.getElementById('fFloor').value,
+    mess,
+    contact:document.getElementById('fContact').value||'—',
+    parent:document.getElementById('fParent').value||'—',
+    email:document.getElementById('fEmail').value||'—',
+    admit:document.getElementById('fAdmit').value||new Date().toISOString().split('T')[0],
+    status:'Active',
+    course:document.getElementById('fCourse').value||'—',
+    year:document.getElementById('fYear').value||'—',
+  };
+  STUDENTS.push(newStu);
+  filteredData = [...STUDENTS];
+  renderTable(); renderGrid();
+  document.querySelectorAll('.form-input').forEach(el=>el.value='');
+  showToast('Student Added','Profile created successfully.');
+  setTimeout(()=>switchView('table'),600);
+}
+
+// ─── EDIT MODAL ───────────────────────────────────
+function openEditModal(field){
+  editField = field;
+  const s = STUDENTS[profileIdx];
+  const overlay = document.getElementById('editOverlay');
+  const mf = document.getElementById('modalField');
+  if(field==='room'){
+    document.getElementById('modalTitle').textContent='Update Room';
+    document.getElementById('modalSub').textContent='Assign a new room to '+s.name+'.';
+    mf.innerHTML=`<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:7px">New Room Number</label>
+      <input class="form-input" id="modalInput" value="${s.room}" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-size:13.5px;color:var(--text);width:100%;font-family:inherit;outline:none"/>`;
+  } else {
+    document.getElementById('modalTitle').textContent='Update Mess Preference';
+    document.getElementById('modalSub').textContent='Change mess preference for '+s.name+'.';
+    mf.innerHTML=`<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:7px">Mess Type</label>
+      <select id="modalInput" class="form-input" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-size:13.5px;color:var(--text);width:100%;font-family:inherit;outline:none">
+        <option ${s.mess==='Veg'?'selected':''}>Veg</option>
+        <option ${s.mess==='Non-Veg'?'selected':''}>Non-Veg</option>
+        <option ${s.mess==='Both'?'selected':''}>Both</option>
+      </select>`;
+  }
+  overlay.classList.add('show');
+}
+
+function saveModal(){
+  const val = document.getElementById('modalInput').value.trim();
+  if(!val) return;
+  if(editField==='room'){
+    STUDENTS[profileIdx].room = val;
+    document.getElementById('pRoom').textContent = val;
+  } else {
+    STUDENTS[profileIdx].mess = val;
+    document.getElementById('pMess').textContent = val;
+    const t = document.getElementById('pMessTag');
+    t.textContent = val; t.className='tag '+(val==='Veg'?'veg':val==='Non-Veg'?'nonveg':'both');
+    renderMessMenu(val);
+  }
+  document.getElementById('editOverlay').classList.remove('show');
+  showToast('Updated','Changes saved to profile.');
+  renderTable(); renderGrid();
+}
+
+function closeModal(e){ if(e.target===document.getElementById('editOverlay')) document.getElementById('editOverlay').classList.remove('show'); }
+
+// ─── DELETE ───────────────────────────────────────
+function confirmDelete(idx){
+  if(!confirm(`Remove ${STUDENTS[idx].name} from the system? This cannot be undone.`)) return;
+  STUDENTS.splice(idx,1);
+  filteredData = [...STUDENTS];
+  renderTable(); renderGrid();
+  showToast('Student Removed','Record deleted from system.');
+}
+
+// ─── EXPORT ───────────────────────────────────────
+function exportCSV(){
+  const headers = ['ID','Name','Roll','Room','Block','Floor','Mess','Contact','Parent','Email','Admit','Status'];
+  const rows = filteredData.map(s=>[s.id,s.name,s.roll,s.room,s.block,s.floor,s.mess,s.contact,s.parent,s.email,s.admit,s.status].join(','));
+  const csv = [headers.join(','),...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'hostelOS_students.csv';
+  a.click();
+}
+
+// ─── TOAST ────────────────────────────────────────
+function showToast(title, sub, type='success'){
+  const t = document.getElementById('toast');
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastSub').textContent   = sub;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
 </script>
 </body>
 </html>

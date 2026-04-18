@@ -19,7 +19,7 @@
   .logo-mark { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; color:var(--text); }
   .logo-mark span { color:var(--accent); }
   .logo-sub { font-size:11px; color:var(--muted); margin-top:2px; }
-  .nav { padding:14px 10px; flex:1; }
+  .nav { padding:14px 10px; flex:1; overflow-y:auto; }
   .nav-section { font-size:10px; font-weight:500; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:0 10px; margin:14px 0 5px; }
   .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13.5px; color:var(--muted); transition:all 0.15s; margin-bottom:2px; text-decoration:none; }
   .nav-item:hover { background:var(--surface2); color:var(--text); }
@@ -37,14 +37,23 @@
   .topbar { padding:18px 30px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:50; }
   .topbar h1 { font-family:'Syne',sans-serif; font-size:17px; font-weight:700; }
   .topbar p { font-size:12px; color:var(--muted); margin-top:2px; }
-  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; position:relative; }
   .icon-btn { width:36px; height:36px; border-radius:9px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
   .icon-btn svg { width:16px; height:16px; color:var(--muted); }
   .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; background:var(--red); border-radius:50%; border:2px solid var(--surface); }
   .role-badge { font-size:11px; font-weight:600; padding:4px 12px; border-radius:20px; background:rgba(245,158,11,0.12); color:var(--accent); border:1px solid rgba(245,158,11,0.3); }
 
+  /* FIX #13: Notification panel */
+  .notif-panel { display:none; position:absolute; top:44px; right:0; width:290px; background:var(--surface); border:1px solid var(--border2); border-radius:12px; padding:14px; box-shadow:0 8px 32px rgba(0,0,0,0.4); z-index:200; }
+  .notif-panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .notif-panel-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; }
+  .notif-mark-read { font-size:11px; color:var(--accent); cursor:pointer; }
+  .notif-item2 { display:flex; gap:9px; padding:8px 10px; background:var(--surface2); border-radius:8px; margin-bottom:6px; font-size:12px; }
+  .nd2 { width:6px; height:6px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+
   .content { padding:26px 30px; }
-  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+  /* FIX #18: Responsive stats grid */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-bottom:24px; }
   .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; position:relative; overflow:hidden; }
   .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:14px 14px 0 0; }
   .stat-card.amber::before { background:var(--accent); }
@@ -64,11 +73,12 @@
   .stat-change.warn { background:rgba(245,158,11,0.1); color:var(--accent); }
   .stat-change.ok { background:rgba(34,197,94,0.08); color:var(--green); }
 
-  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:22px; }
+  /* FIX #18: Responsive two-col */
+  .two-col { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px; margin-bottom:22px; }
   .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px 22px; margin-bottom:18px; }
   .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
   .card-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
-  .card-link { font-size:12px; color:var(--accent); cursor:pointer; }
+  .card-link { font-size:12px; color:var(--accent); cursor:pointer; text-decoration:none; }
 
   .leave-request { display:flex; align-items:center; gap:12px; padding:11px 13px; background:var(--surface2); border-radius:10px; margin-bottom:8px; }
   .req-avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
@@ -98,6 +108,14 @@
   .v-meta { font-size:11px; color:var(--muted); }
   .v-time { font-size:11px; color:var(--muted); }
   .btn-checkout { font-size:11px; padding:4px 10px; border-radius:6px; background:var(--surface); color:var(--muted); border:1px solid var(--border); cursor:pointer; }
+
+  /* FIX #17: Mobile responsive */
+  @media (max-width:768px) {
+    .sidebar { position:relative; width:100%; height:auto; }
+    .main { margin-left:0; }
+    .content { padding:16px; }
+    .topbar { padding:14px 16px; }
+  }
 </style>
 </head>
 <body>
@@ -113,6 +131,7 @@
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Dashboard
     </a>
+    <!-- FIX #12: leave-warden.html is correct for warden's leave management -->
     <a class="nav-item" href="leave-warden.html">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
       Leave Requests
@@ -156,9 +175,19 @@
       <p><span id="liveDate">Loading...</span></p>
     </div>
     <div class="topbar-right">
-      <div class="icon-btn">
+      <!-- FIX #13: notifBtn, notifDot, notifPanel all present -->
+      <div class="icon-btn" id="notifBtn" onclick="toggleNotif()" aria-label="Notifications" role="button">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-        <div class="notif-dot"></div>
+        <div class="notif-dot" id="notifDot"></div>
+      </div>
+      <div class="notif-panel" id="notifPanel" role="dialog" aria-label="Notifications">
+        <div class="notif-panel-header">
+          <span class="notif-panel-title">Notifications</span>
+          <span class="notif-mark-read" onclick="markAllRead()">Mark all read</span>
+        </div>
+        <div class="notif-item2"><div class="nd2" style="background:var(--accent)"></div><span>3 leave requests pending your approval.</span></div>
+        <div class="notif-item2"><div class="nd2" style="background:var(--red)"></div><span>High priority complaint: washroom, Floor 2.</span></div>
+        <div class="notif-item2"><div class="nd2" style="background:var(--blue)"></div><span>2 visitors currently checked in.</span></div>
       </div>
       <span class="role-badge">Warden</span>
     </div>
@@ -202,7 +231,8 @@
         <div class="card">
           <div class="card-header">
             <div class="card-title">Pending Leave Requests</div>
-            <span class="card-link" onclick="window.location.href='leave.html'">View all →</span>
+            <!-- FIX #11: Was pointing to leave.html (student page). Fixed to leave-warden.html -->
+            <a class="card-link" href="leave-warden.html">View all →</a>
           </div>
           <div class="leave-request" id="lr1">
             <div class="req-avatar" style="background:rgba(59,130,246,0.15);color:var(--blue)">RK</div>
@@ -235,41 +265,22 @@
         <div class="card">
           <div class="card-header">
             <div class="card-title">Open Complaints</div>
-            <span class="card-link" onclick="window.location.href='complaints.html'">View all →</span>
+            <a class="card-link" href="complaints.html">View all →</a>
           </div>
-          <div class="complaint-item">
-            <span class="complaint-cat cat-washroom">Washroom</span>
-            <div class="complaint-text"><div class="complaint-title">Floor 2 washroom not clean</div><div class="complaint-meta">Rahul Kumar · Apr 10 · High priority</div></div>
-            <button class="btn-resolve">Resolve</button>
-          </div>
-          <div class="complaint-item">
-            <span class="complaint-cat cat-mess">Mess</span>
-            <div class="complaint-text"><div class="complaint-title">Food quality poor — dinner</div><div class="complaint-meta">Priya Nair · Apr 11 · Medium</div></div>
-            <button class="btn-resolve">Resolve</button>
-          </div>
-          <div class="complaint-item">
-            <span class="complaint-cat cat-room">Room</span>
-            <div class="complaint-text"><div class="complaint-title">Room 308 light not working</div><div class="complaint-meta">Karan Joshi · Apr 9 · Low</div></div>
-            <button class="btn-resolve">Resolve</button>
+          <div id="wardenComplaintsList">
+            <!-- Loaded dynamically from student submissions -->
+            <div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Loading complaints...</div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Current Visitors</div>
-            <span class="card-link" onclick="window.location.href='visitors.html'">Log entry →</span>
+            <div class="card-title">Visitor Requests</div>
+            <a class="card-link" href="visitors.html">View all →</a>
           </div>
-          <div class="visitor-item">
-            <div class="v-dot" style="background:var(--green)"></div>
-            <div class="v-info"><div class="v-name">Mr. Suresh Kumar</div><div class="v-meta">Visiting: Rahul Kumar, Room 204</div></div>
-            <span class="v-time">In at 2:30 PM</span>
-            <button class="btn-checkout">Check out</button>
-          </div>
-          <div class="visitor-item">
-            <div class="v-dot" style="background:var(--green)"></div>
-            <div class="v-info"><div class="v-name">Mrs. Kavita Patel</div><div class="v-meta">Visiting: Sneha Patel, Room 118</div></div>
-            <span class="v-time">In at 3:10 PM</span>
-            <button class="btn-checkout">Check out</button>
+          <div id="wardenVisitorsList">
+            <!-- Loaded dynamically from student submissions -->
+            <div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Loading visitor requests...</div>
           </div>
         </div>
       </div>
@@ -278,8 +289,12 @@
 </main>
 
 <script>
-  if (localStorage.getItem('hostel_role') !== 'warden') window.location.href = 'index.html';
-  function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+  // FIX #2/#3: sessionStorage auth check
+  if (!sessionStorage.getItem('hostel_token') || sessionStorage.getItem('hostel_role') !== 'warden') {
+    window.location.href = 'index.html';
+  }
+  function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
+
   function updateDateTime() {
     const now = new Date();
     const h = now.getHours();
@@ -292,6 +307,7 @@
   }
   updateDateTime();
   setInterval(updateDateTime, 60000);
+
   let notifOpen = false;
   function toggleNotif() {
     notifOpen = !notifOpen;
@@ -315,7 +331,137 @@
     const lcolor = action === 'approved' ? 'var(--green)' : 'var(--red)';
     el.style.background = color;
     el.querySelector('.req-actions').innerHTML = `<span style="font-size:12px;font-weight:600;color:${lcolor}">${label}</span>`;
+    const stored = JSON.parse(localStorage.getItem('warden_leaves') || '[]');
+    const names = { lr1: 'Rahul Kumar', lr2: 'Sneha Patel', lr3: 'Amit Verma' };
+    const existing = stored.findIndex(r => r.id === id);
+    const record = { id, name: names[id] || id, status: action };
+    if (existing >= 0) stored[existing] = record; else stored.push(record);
+    localStorage.setItem('warden_leaves', JSON.stringify(stored));
   }
+
+  (function restoreLeaveState() {
+    const stored = JSON.parse(localStorage.getItem('warden_leaves') || '[]');
+    stored.forEach(r => {
+      const el = document.getElementById(r.id);
+      if (!el) return;
+      const color = r.status === 'approved' ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+      const label = r.status === 'approved' ? '✓ Approved' : '✗ Rejected';
+      const lcolor = r.status === 'approved' ? 'var(--green)' : 'var(--red)';
+      el.style.background = color;
+      el.querySelector('.req-actions').innerHTML = `<span style="font-size:12px;font-weight:600;color:${lcolor}">${label}</span>`;
+    });
+  })();
+
+  // ── DYNAMIC COMPLAINTS FROM STUDENT SUBMISSIONS ────────────────────
+  function loadStudentComplaints() {
+    try { return JSON.parse(localStorage.getItem('hostelComplaints') || '[]'); } catch(e) { return []; }
+  }
+  function saveStudentComplaints(arr) { localStorage.setItem('hostelComplaints', JSON.stringify(arr)); }
+
+  function resolveComplaint(id) {
+    const all = loadStudentComplaints();
+    const idx = all.findIndex(c => c.id === id);
+    if(idx >= 0) {
+      all[idx].status = 'resolved';
+      all[idx].wardenNote = 'Resolved by warden.';
+      saveStudentComplaints(all);
+      renderWardenComplaints();
+    }
+  }
+
+  function renderWardenComplaints() {
+    const all = loadStudentComplaints().filter(c => c.status !== 'resolved');
+    const container = document.getElementById('wardenComplaintsList');
+    if(!all.length) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">No open complaints from students.</div>';
+      return;
+    }
+    const catColors = { Washroom:'blue', Mess:'amber', Room:'purple', Electrical:'red', Other:'muted' };
+    container.innerHTML = all.slice(0,5).map(c => `
+      <div class="complaint-item">
+        <span class="complaint-cat cat-${(c.cat||'other').toLowerCase()}">${c.cat}</span>
+        <div class="complaint-text">
+          <div class="complaint-title">${c.title}</div>
+          <div class="complaint-meta">${c.student} · ${c.date} · ${c.urgency||'Medium'}</div>
+        </div>
+        <button class="btn-resolve" onclick="resolveComplaint('${c.id}')">Resolve</button>
+      </div>
+    `).join('');
+  }
+
+  // ── DYNAMIC VISITOR REQUESTS FROM STUDENT SUBMISSIONS ──────────────
+  function loadVisitorRequests() {
+    try { return JSON.parse(localStorage.getItem('hostelVisitors') || '[]'); } catch(e) { return []; }
+  }
+  function saveVisitorRequests(arr) { localStorage.setItem('hostelVisitors', JSON.stringify(arr)); }
+
+  function approveVisitor(id) {
+    const all = loadVisitorRequests();
+    const idx = all.findIndex(v => v.id === id);
+    if(idx >= 0) {
+      all[idx].status = 'approved';
+      all[idx].wardenNote = 'Entry approved by warden.';
+      saveVisitorRequests(all);
+      renderWardenVisitors();
+    }
+  }
+  function rejectVisitor(id) {
+    const all = loadVisitorRequests();
+    const idx = all.findIndex(v => v.id === id);
+    if(idx >= 0) {
+      all[idx].status = 'rejected';
+      all[idx].wardenNote = 'Request rejected by warden.';
+      saveVisitorRequests(all);
+      renderWardenVisitors();
+    }
+  }
+
+  function renderWardenVisitors() {
+    const all = loadVisitorRequests();
+    const pending  = all.filter(v => v.status === 'pending');
+    const approved = all.filter(v => v.status === 'approved');
+    const container = document.getElementById('wardenVisitorsList');
+
+    if(!all.length) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">No visitor requests from students yet.</div>';
+      return;
+    }
+
+    let html = '';
+    if(pending.length) {
+      html += `<div style="font-size:11px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⏳ Awaiting Approval (${pending.length})</div>`;
+      html += pending.slice(0,3).map(v => `
+        <div class="visitor-item" style="flex-direction:column;align-items:flex-start;gap:8px;padding:12px">
+          <div style="display:flex;width:100%;align-items:center;gap:10px">
+            <div class="v-dot" style="background:var(--amber)"></div>
+            <div class="v-info" style="flex:1">
+              <div class="v-name">${v.visitorName}</div>
+              <div class="v-meta">Visiting: ${v.studentName} · ${v.relation} · ${v.purpose}</div>
+              <div class="v-meta">${v.date}${v.time ? ' at '+v.time : ''} · ${v.duration}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-left:17px">
+            <button class="btn-approve" onclick="approveVisitor('${v.id}')">✓ Approve Entry</button>
+            <button class="btn-reject" onclick="rejectVisitor('${v.id}')">✗ Reject</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    if(approved.length) {
+      html += `<div style="font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 8px">✓ Approved (${approved.length})</div>`;
+      html += approved.slice(0,2).map(v => `
+        <div class="visitor-item">
+          <div class="v-dot" style="background:var(--green)"></div>
+          <div class="v-info"><div class="v-name">${v.visitorName}</div><div class="v-meta">Visiting: ${v.studentName} · ${v.date}</div></div>
+          <span class="v-time" style="color:var(--green)">Approved</span>
+        </div>
+      `).join('');
+    }
+    container.innerHTML = html;
+  }
+
+  renderWardenComplaints();
+  renderWardenVisitors();
 </script>
 </body>
 </html>

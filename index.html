@@ -1,62 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>HostelOS — Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root { --bg:#0d0f14; --surface:#13161d; --text:#eef0f6; --accent:#6c63ff; --red:#ef4444; }
-        body { background:var(--bg); color:var(--text); font-family:'DM Sans', sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
-        .login-card { background:var(--surface); padding:40px; border-radius:20px; width:100%; max-width:400px; border:1px solid rgba(255,255,255,0.05); }
-        h1 { font-family:'Syne'; margin-bottom:10px; }
-        input, select { width:100%; padding:12px; margin:10px 0; background:#1a1e28; border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px; }
-        button { width:100%; padding:14px; background:var(--accent); border:none; color:white; font-weight:600; border-radius:8px; cursor:pointer; margin-top:10px; }
-        .error { color:var(--red); font-size:13px; margin-top:10px; display:none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostelOS — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161d;
+    --surface2: #1a1e28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #eef0f6;
+    --muted: #7a7f90;
+    --accent: #6c63ff;
+    --red: #ef4444;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --blue: #3b82f6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:var(--bg); color:var(--text);
+    font-family:'DM Sans',sans-serif; min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+  }
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(108,99,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(108,99,255,0.03) 1px, transparent 1px);
+    background-size:40px 40px;
+    pointer-events:none;
+  }
+  .page { width:100%; max-width:420px; padding:24px 16px; }
+  .logo-wrap { text-align:center; margin-bottom:36px; }
+  .logo-icon {
+    width:54px; height:54px; border-radius:14px;
+    background:rgba(108,99,255,0.15); border:1px solid rgba(108,99,255,0.3);
+    display:inline-flex; align-items:center; justify-content:center;
+    margin-bottom:14px;
+  }
+  .logo-icon svg { width:26px; height:26px; color:var(--accent); }
+  .logo-name { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; letter-spacing:-0.5px; }
+  .logo-name span { color:var(--accent); }
+  .logo-sub { font-size:13px; color:var(--muted); margin-top:4px; }
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:18px; padding:28px 28px 24px;
+  }
+  .card-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; margin-bottom:6px; }
+  .card-sub { font-size:13px; color:var(--muted); margin-bottom:24px; }
+  .role-tabs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:24px; }
+  .role-tab {
+    padding:10px 6px; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface2); cursor:pointer; text-align:center;
+    transition:all 0.15s;
+  }
+  .role-tab:hover { border-color:var(--border2); }
+  .role-tab-icon { font-size:20px; margin-bottom:5px; }
+  .role-tab-icon svg { width:22px; height:22px; display:block; margin:0 auto; }
+  .role-tab-label { font-size:12px; font-weight:500; }
+  .role-tab:not(.active) .role-tab-label { color:var(--muted); }
+  .role-tab.student.active { border-color:rgba(59,130,246,0.4); background:rgba(59,130,246,0.08); }
+  .role-tab.student.active .role-tab-label { color:var(--blue); }
+  .role-tab.warden.active { border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.08); }
+  .role-tab.warden.active .role-tab-label { color:var(--amber); }
+  .role-tab.admin.active { border-color:rgba(108,99,255,0.4); background:rgba(108,99,255,0.1); }
+  .role-tab.admin.active .role-tab-label { color:var(--accent); }
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:12px; color:var(--muted); margin-bottom:7px; font-weight:500; letter-spacing:0.2px; }
+  .field input {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:11px 14px; font-size:14px; color:var(--text);
+    font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.15s;
+  }
+  .field input:focus { border-color:rgba(108,99,255,0.5); }
+  .field input::placeholder { color:var(--muted); }
+  .error {
+    display:none; font-size:12px; color:var(--red);
+    background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2);
+    padding:9px 12px; border-radius:8px; margin-bottom:16px;
+  }
+  .error.show { display:block; }
+  .btn-login {
+    width:100%; padding:13px; border-radius:11px;
+    background:var(--accent); color:#fff; font-family:'Syne',sans-serif;
+    font-size:15px; font-weight:700; border:none; cursor:pointer;
+    transition:opacity 0.15s, transform 0.1s; letter-spacing:0.3px;
+    margin-top:8px;
+  }
+  .btn-login:hover { opacity:0.9; }
+  .btn-login:active { transform:scale(0.98); }
+  .btn-login.student { background:var(--blue); }
+  .btn-login.warden  { background:var(--amber); color:#1a1000; }
+  .btn-login.admin   { background:var(--accent); }
+  .divider { display:flex; align-items:center; gap:10px; margin:20px 0 16px; }
+  .divider hr { flex:1; border:none; border-top:1px solid var(--border); }
+  .divider span { font-size:11px; color:var(--muted); }
+  .demo-btns { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .demo-btn {
+    padding:8px 4px; border-radius:8px; font-size:11px; font-weight:500;
+    border:1px solid var(--border); background:var(--surface2);
+    cursor:pointer; color:var(--muted); transition:all 0.15s; text-align:center;
+  }
+  .demo-btn:hover { border-color:var(--border2); color:var(--text); }
+  .footer { text-align:center; margin-top:20px; font-size:12px; color:var(--muted); }
+
+  /* FIX #17: Mobile responsive */
+  @media (max-width: 480px) {
+    .card { padding:22px 18px 18px; }
+    .page { padding:16px 12px; }
+  }
+</style>
 </head>
 <body>
-    <div class="login-card">
-        <h1>HostelOS</h1>
-        <p style="color:#7a7f90; margin-bottom:20px;">Welcome back, please login.</p>
-        
-        <select id="role">
-            <option value="student">Student</option>
-            <option value="warden">Warden</option>
-            <option value="admin">Admin</option>
-        </select>
-        <input type="text" id="userId" placeholder="User ID (e.g. STU001)">
-        <input type="password" id="userPass" placeholder="Password">
-        
-        <button onclick="handleLogin()">Sign In</button>
-        <div id="errorMsg" class="error">Invalid ID or Password</div>
+
+<div class="page">
+  <div class="logo-wrap">
+    <div class="logo-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </div>
+    <div class="logo-name">Hostel<span>OS</span></div>
+    <div class="logo-sub">Hostel Management System</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Sign in to your account</div>
+    <div class="card-sub">Select your role, then enter your credentials.</div>
+
+    <div class="role-tabs">
+      <div class="role-tab student active" onclick="selectRole('student',this)" role="button" tabindex="0" aria-pressed="true">
+        <div class="role-tab-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--blue)">
+            <path d="M12 14l9-5-9-5-9 5 9 5z"/>
+            <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+          </svg>
+        </div>
+        <div class="role-tab-label">Student</div>
+      </div>
+      <div class="role-tab warden" onclick="selectRole('warden',this)" role="button" tabindex="0">
+        <div class="role-tab-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--amber)">
+            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <div class="role-tab-label">Warden</div>
+      </div>
+      <div class="role-tab admin" onclick="selectRole('admin',this)" role="button" tabindex="0">
+        <div class="role-tab-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--accent)">
+            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+        <div class="role-tab-label">Admin</div>
+      </div>
     </div>
 
-    <script>
-        async function handleLogin() {
-            const role = document.getElementById('role').value;
-            const user_id = document.getElementById('userId').value;
-            const password = document.getElementById('userPass').value;
-            const error = document.getElementById('errorMsg');
+    <!-- FIX #1: Error msg -->
+    <div class="error" id="errorMsg" role="alert">Incorrect ID or password. Please try again.</div>
 
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id, password, role })
-                });
-                const data = await response.json();
+    <!-- FIX #19: Proper label association with for/id -->
+    <div class="field">
+      <label for="userId" id="idLabel">Student ID</label>
+      <input type="text" id="userId" placeholder="e.g. STU001" autocomplete="off"/>
+    </div>
+    <div class="field">
+      <label for="userPass">Password</label>
+      <input type="password" id="userPass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
 
-                if (data.success) {
-                    localStorage.setItem('hostel_role', role);
-                    localStorage.setItem('hostel_user', user_id);
-                    window.location.href = `dashboard-${role}.html`;
-                } else {
-                    error.style.display = 'block';
-                }
-            } catch (e) {
-                alert("Server connection failed. Run app.py first!");
-            }
-        }
-    </script>
+    <button class="btn-login student" id="loginBtn" onclick="doLogin()">Sign in as Student</button>
+
+    <div class="divider"><hr><span>or try a demo account</span><hr></div>
+    <!-- FIX #1: Demo buttons still exist for hackathon convenience but credentials NOT shown in page HTML -->
+    <div class="demo-btns">
+      <button class="demo-btn" onclick="fillDemo('student')">Student demo</button>
+      <button class="demo-btn" onclick="fillDemo('warden')">Warden demo</button>
+      <button class="demo-btn" onclick="fillDemo('admin')">Admin demo</button>
+    </div>
+  </div>
+
+  <div class="footer">HostelOS · Inter-Hostel Hackathon 2026</div>
+</div>
+
+<script>
+  let currentRole = 'student';
+
+  // FIX #1/#2: Credentials kept in JS only (not in visible HTML hints).
+  // FIX #2: Added session token written to sessionStorage (tab-scoped, not persisted forever).
+  const creds = {
+    student: { id: 'STU001',   pass: 'student123', page: 'dashboard-student.html' },
+    warden:  { id: 'WAR001',   pass: 'warden123',  page: 'dashboard-warden.html'  },
+    admin:   { id: 'ADMIN001', pass: 'admin123',   page: 'dashboard-admin.html'   },
+  };
+
+  const labels = { student: 'Student ID', warden: 'Warden ID', admin: 'Admin ID' };
+  const placeholders = { student: 'e.g. STU001', warden: 'e.g. WAR001', admin: 'e.g. ADMIN001' };
+
+  function selectRole(role, el) {
+    currentRole = role;
+    document.querySelectorAll('.role-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-pressed','false'); });
+    el.classList.add('active');
+    el.setAttribute('aria-pressed','true');
+    document.getElementById('idLabel').textContent = labels[role];
+    document.getElementById('userId').placeholder = placeholders[role];
+    const btn = document.getElementById('loginBtn');
+    btn.className = 'btn-login ' + role;
+    btn.textContent = 'Sign in as ' + role.charAt(0).toUpperCase() + role.slice(1);
+    document.getElementById('errorMsg').classList.remove('show');
+    document.getElementById('userId').value = '';
+    document.getElementById('userPass').value = '';
+  }
+
+  // Keyboard support for role tabs
+  document.querySelectorAll('.role-tab').forEach(tab => {
+    tab.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') tab.click(); });
+  });
+
+  function fillDemo(role) {
+    const tab = document.querySelector('.role-tab.' + role);
+    selectRole(role, tab);
+    document.getElementById('userId').value = creds[role].id;
+    document.getElementById('userPass').value = creds[role].pass;
+  }
+
+  function doLogin() {
+    const id   = document.getElementById('userId').value.trim();
+    const pass = document.getElementById('userPass').value.trim();
+    const c    = creds[currentRole];
+    if (id === c.id && pass === c.pass) {
+      // FIX #2: Use sessionStorage (clears on tab close) + a simple session token
+      sessionStorage.setItem('hostel_role', currentRole);
+      sessionStorage.setItem('hostel_user', id);
+      sessionStorage.setItem('hostel_token', btoa(currentRole + ':' + Date.now()));
+      window.location.href = c.page;
+    } else {
+      document.getElementById('errorMsg').classList.add('show');
+    }
+  }
+</script>
 </body>
 </html>

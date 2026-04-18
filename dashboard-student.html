@@ -24,7 +24,7 @@
   .logo-mark { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; color:var(--text); }
   .logo-mark span { color:var(--accent); }
   .logo-sub { font-size:11px; color:var(--muted); margin-top:2px; }
-  .nav { padding:14px 10px; flex:1; }
+  .nav { padding:14px 10px; flex:1; overflow-y:auto; }
   .nav-section { font-size:10px; font-weight:500; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:0 10px; margin:14px 0 5px; }
   .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13.5px; color:var(--muted); transition:all 0.15s; margin-bottom:2px; text-decoration:none; }
   .nav-item:hover { background:var(--surface2); color:var(--text); }
@@ -35,19 +35,27 @@
   .avatar { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--blue),#60a5fa); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:#fff; flex-shrink:0; }
   .user-name { font-size:13px; font-weight:500; }
   .user-role { font-size:11px; color:var(--muted); }
-  .logout-btn { margin-top:auto; display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13px; color:var(--muted); transition:all 0.15s; }
+  .logout-btn { display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13px; color:var(--muted); transition:all 0.15s; margin:4px 10px 10px; }
   .logout-btn:hover { background:rgba(239,68,68,0.08); color:var(--red); }
 
   .main { margin-left:220px; min-height:100vh; }
   .topbar { padding:18px 30px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:50; }
   .topbar h1 { font-family:'Syne',sans-serif; font-size:17px; font-weight:700; }
   .topbar p { font-size:12px; color:var(--muted); margin-top:2px; }
-  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .topbar-right { display:flex; align-items:center; gap:10px; position:relative; }
   .icon-btn { width:36px; height:36px; border-radius:9px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; transition:all 0.15s; }
   .icon-btn:hover { border-color:var(--border2); }
   .icon-btn svg { width:16px; height:16px; color:var(--muted); }
   .notif-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; background:var(--red); border-radius:50%; border:2px solid var(--surface); }
   .role-badge { font-size:11px; font-weight:600; padding:4px 12px; border-radius:20px; background:rgba(59,130,246,0.12); color:var(--blue); border:1px solid rgba(59,130,246,0.25); }
+
+  /* FIX #13: Notification panel */
+  .notif-panel { display:none; position:absolute; top:44px; right:0; width:300px; background:var(--surface); border:1px solid var(--border2); border-radius:12px; padding:14px; box-shadow:0 8px 32px rgba(0,0,0,0.4); z-index:200; }
+  .notif-panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .notif-panel-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; }
+  .notif-mark-read { font-size:11px; color:var(--blue); cursor:pointer; }
+  .np-item { display:flex; gap:9px; padding:8px 10px; background:var(--surface2); border-radius:8px; margin-bottom:6px; font-size:12px; line-height:1.5; }
+  .np-dot { width:6px; height:6px; border-radius:50%; margin-top:5px; flex-shrink:0; }
 
   .content { padding:26px 30px; }
   .alert-banner { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:12px; padding:12px 16px; display:flex; align-items:center; gap:12px; margin-bottom:22px; }
@@ -58,7 +66,8 @@
   .alert-sub { font-size:12px; color:var(--muted); margin-top:1px; }
   .alert-btn { font-size:12px; font-weight:500; padding:6px 14px; border-radius:7px; background:var(--red); color:#fff; cursor:pointer; border:none; white-space:nowrap; }
 
-  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+  /* FIX #18: Responsive stats grid */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; margin-bottom:24px; }
   .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; position:relative; overflow:hidden; }
   .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:14px 14px 0 0; }
   .stat-card.blue::before { background:var(--blue); }
@@ -87,11 +96,12 @@
   .bar-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--blue),#60a5fa); }
   .points-meta { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); }
 
-  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:22px; }
+  /* FIX #18: Responsive two-col */
+  .two-col { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:18px; margin-bottom:22px; }
   .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px 22px; }
   .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
   .card-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
-  .card-link { font-size:12px; color:var(--blue); cursor:pointer; }
+  .card-link { font-size:12px; color:var(--blue); cursor:pointer; text-decoration:none; }
 
   .attendance-ring { display:flex; align-items:center; gap:18px; }
   .ring-wrap { position:relative; width:84px; height:84px; flex-shrink:0; }
@@ -124,11 +134,20 @@
   .notif-text { font-size:12.5px; line-height:1.5; }
   .notif-time { font-size:11px; color:var(--muted); display:block; margin-top:2px; }
 
-  .quick-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  /* FIX #18: Quick grid responsive */
+  .quick-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:8px; }
   .quick-btn { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 8px; text-align:center; cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; align-items:center; gap:7px; text-decoration:none; }
   .quick-btn:hover { border-color:var(--border2); transform:translateY(-1px); }
   .quick-btn svg { width:18px; height:18px; }
   .quick-btn span { font-size:11px; color:var(--muted); font-weight:500; }
+
+  /* FIX #17: Mobile responsive */
+  @media (max-width:768px) {
+    .sidebar { position:relative; width:100%; height:auto; }
+    .main { margin-left:0; }
+    .content { padding:16px; }
+    .topbar { padding:14px 16px; }
+  }
 </style>
 </head>
 <body>
@@ -153,9 +172,13 @@
       Leave Application
       <span class="nav-badge">1</span>
     </a>
-    <a class="nav-item" href="complaints.html">
+    <a class="nav-item" href="complaint-student.html">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
       Complaints
+    </a>
+    <a class="nav-item" href="visitor-student.html">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Visitor Request
     </a>
     <a class="nav-item" href="fees.html">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
@@ -182,9 +205,19 @@
       <p><span id="liveDate">Loading...</span></p>
     </div>
     <div class="topbar-right">
-      <div class="icon-btn">
+      <!-- FIX #13: notifBtn id, notifDot id, notifPanel element all present -->
+      <div class="icon-btn" id="notifBtn" onclick="toggleNotif()" aria-label="Notifications" role="button">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-        <div class="notif-dot"></div>
+        <div class="notif-dot" id="notifDot"></div>
+      </div>
+      <div class="notif-panel" id="notifPanel" role="dialog" aria-label="Notifications">
+        <div class="notif-panel-header">
+          <span class="notif-panel-title">Notifications</span>
+          <span class="notif-mark-read" onclick="markAllRead()">Mark all read</span>
+        </div>
+        <div class="np-item"><div class="np-dot" style="background:var(--red)"></div><span>Fee ₹18,500 due in 5 days. Pay before 17 April.</span></div>
+        <div class="np-item"><div class="np-dot" style="background:var(--amber)"></div><span>Leave for Apr 18–19 is pending warden approval.</span></div>
+        <div class="np-item"><div class="np-dot" style="background:var(--accent)"></div><span>Complaint (washroom) under review. ETA: 2 days.</span></div>
       </div>
       <span class="role-badge">Student</span>
     </div>
@@ -250,7 +283,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Attendance — April 2026</div>
-          <span class="card-link" onclick="window.location.href='students.html'">View profile →</span>
+          <a class="card-link" href="profile-student.html">View profile →</a>
         </div>
         <div class="attendance-ring">
           <div class="ring-wrap">
@@ -276,7 +309,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Recent Leaves</div>
-          <span class="card-link" onclick="window.location.href='leave.html'">Apply new →</span>
+          <a class="card-link" href="leave.html">Apply new →</a>
         </div>
         <div class="leave-list">
           <div class="leave-item">
@@ -300,7 +333,10 @@
 
     <div class="two-col">
       <div class="card">
-        <div class="card-header"><div class="card-title">Notifications</div><span class="card-link">Mark all read</span></div>
+        <div class="card-header">
+          <div class="card-title">Notifications</div>
+          <span class="card-link" onclick="markAllRead()">Mark all read</span>
+        </div>
         <div class="notif-list">
           <div class="notif-item">
             <div class="notif-dot2" style="background:var(--red)"></div>
@@ -312,7 +348,7 @@
           </div>
           <div class="notif-item">
             <div class="notif-dot2" style="background:var(--accent)"></div>
-            <div><div class="notif-text">Complaint #C042 (washroom) under review. ETA: 2 days.</div><span class="notif-time">Apr 10, 11:00 AM</span></div>
+            <div><div class="notif-text">Complaint (washroom) under review. ETA: 2 days.</div><span class="notif-time">Apr 10, 11:00 AM</span></div>
           </div>
           <div class="notif-item">
             <div class="notif-dot2" style="background:var(--blue)"></div>
@@ -328,7 +364,7 @@
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--amber)"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <span>Apply Leave</span>
           </a>
-          <a class="quick-btn" href="complaints.html">
+          <a class="quick-btn" href="complaint-student.html">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             <span>Complaint</span>
           </a>
@@ -348,9 +384,12 @@
 </main>
 
 <script>
-  if (localStorage.getItem('hostel_role') !== 'student') window.location.href = 'index.html';
-  function logout() { localStorage.clear(); window.location.href = 'index.html'; }
-  // Live date
+  // FIX #2/#3: sessionStorage auth
+  if (!sessionStorage.getItem('hostel_token') || sessionStorage.getItem('hostel_role') !== 'student') {
+    window.location.href = 'index.html';
+  }
+  function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
+
   function updateDateTime() {
     const now = new Date();
     const h = now.getHours();
@@ -364,7 +403,7 @@
   updateDateTime();
   setInterval(updateDateTime, 60000);
 
-  // Notification toggle
+  // FIX #13: toggleNotif and markAllRead now work
   let notifOpen = false;
   function toggleNotif() {
     notifOpen = !notifOpen;
@@ -380,7 +419,6 @@
       if (notifOpen) { document.getElementById('notifPanel').style.display = 'none'; notifOpen = false; }
     }
   });
-
 </script>
 </body>
 </html>

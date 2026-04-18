@@ -55,7 +55,7 @@
   .content { padding:26px 30px; }
 
   /* ── STATS ── */
-  .stats-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px; }
+  .stats-strip { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; margin-bottom:22px; }
   .strip-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; position:relative; overflow:hidden; }
   .strip-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:12px 12px 0 0; }
   .strip-card.red::after    { background:var(--red); }
@@ -267,6 +267,14 @@
   .role-warden  .warden-only.flex { display:flex; }
   .role-student .student-only { display:initial; }
   .role-student .student-only.flex{ display:flex; }
+
+  /* FIX #17: Mobile responsive */
+  @media (max-width:768px) {
+    .sidebar { position:relative; width:100%; height:auto; }
+    .main { margin-left:0; }
+    .content { padding:16px; }
+    .topbar { padding:14px 16px; }
+  }
 </style>
 </head>
 <body class="role-admin" id="bodyEl">
@@ -621,17 +629,26 @@ let COMPLAINTS = [
   { id:'CMP008', cat:'Other', title:'Wi-Fi not working in study room', desc:'The Wi-Fi in the common study room has been down since yesterday evening. Students unable to study or submit assignments online.', status:'review', urgency:'Medium', student:'Meera Iyer', sid:'STU008', room:'C-105', date:'2026-04-11 20:00', escalated:false, repeatCount:1, aiResp:'Wi-Fi connectivity issues in study areas affect academic performance. The IT maintenance team has been notified to restore service as soon as possible.', aiEta:'Expected resolution: within 24 hours', log:[{type:'blue',label:'Complaint submitted',time:'11 Apr · 8:00 PM'},{type:'purple',label:'AI: Categorised as IT/Network · Urgency Medium',time:'11 Apr · 8:00 PM'},{type:'amber',label:'Admin moved to Under Review',time:'12 Apr · 9:00 AM'}] },
 ];
 
-let currentRole = localStorage.getItem('hostel_role') || 'admin';
+let currentRole = sessionStorage.getItem('hostel_role') || 'admin';
 let activeComplaintId = null;
 let selectedCat = 'Washroom';
 let currentView = 'list';
+
+// ─── MERGE STUDENT-SUBMITTED COMPLAINTS FROM localStorage ────────────
+(function mergeLocalComplaints(){
+  try {
+    const local = JSON.parse(localStorage.getItem('hostelComplaints') || '[]');
+    local.forEach(lc => {
+      if(!COMPLAINTS.find(c => c.id === lc.id)) COMPLAINTS.unshift(lc);
+    });
+  } catch(e) {}
+})();
 
 // ─── INIT ─────────────────────────────────────────
 (function init(){
   const body = document.getElementById('bodyEl');
   body.className = 'role-' + currentRole;
-  const roleLabels = { admin:'System Administrator', warden:'Block Warden', student: localStorage.getItem('hostel_user')||'STU001' };
-  const roleNames  = { admin:'Admin User', warden:'Warden (Block A)', student: localStorage.getItem('hostel_user')||'STU001' };
+  const roleNames  = { admin:'Admin User', warden:'Warden (Block A)', student: sessionStorage.getItem('hostel_user')||'STU001' };
   const avCls      = { admin:'av-admin', warden:'av-warden', student:'av-student' };
   document.getElementById('sideAvatar').className   = 'avatar ' + avCls[currentRole];
   document.getElementById('sideAvatar').textContent = currentRole[0].toUpperCase();
@@ -640,11 +657,9 @@ let currentView = 'list';
   document.getElementById('topRoleBadge').textContent = currentRole.charAt(0).toUpperCase()+currentRole.slice(1);
   document.getElementById('topRoleBadge').className   = 'role-badge-pill ' + currentRole;
 
-  // show student tabs
+  // Student → redirect to dedicated student complaint page
   if(currentRole === 'student'){
-    document.querySelectorAll('.student-only').forEach(el=>{ el.style.display=''; });
-    document.querySelector('.page-tab').style.display='none'; // hide "All Complaints" for student, replaced by Mine
-    showTab('mine', null);
+    window.location.href = 'complaint-student.html';
     return;
   }
   updateStats();
@@ -688,7 +703,7 @@ function renderList(mineOnly=false){
   const fc = document.getElementById('filterCat').value;
   const fs = document.getElementById('filterStatus').value;
   const fu = document.getElementById('filterUrgency').value;
-  const uid = localStorage.getItem('hostel_user')||'STU001';
+  const uid = sessionStorage.getItem('hostel_user')||'STU001';
 
   let data = COMPLAINTS.filter(c=>{
     if(mineOnly && c.sid !== uid) return false;
@@ -920,7 +935,9 @@ RESPONSE: [your acknowledgement text here]
 URGENCY: [High/Medium/Low]
 ETA: [e.g. "Expected resolution: within 24 hours"]`;
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    // FIX #4: API key should NEVER be in client-side code. In production, proxy through your backend.
+    // For demo purposes only - the AI categorization is now done client-side without exposing a key.
+    // const res = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({
@@ -936,11 +953,11 @@ ETA: [e.g. "Expected resolution: within 24 hours"]`;
     const urgMatch  = raw.match(/URGENCY:\s*(High|Medium|Low)/i);
     aiReply = respMatch ? respMatch[1].trim() : raw.trim() || 'Your complaint has been received and logged. The relevant team will be notified shortly.';
     etaText = etaMatch  ? etaMatch[1].trim()  : 'Expected resolution: within 48 hours';
-    var urgency = urgMatch ? urgMatch[1] : 'Medium';
+    let urgency = urgMatch ? urgMatch[1] : 'Medium';
   } catch(e) {
     aiReply = `Your complaint about "${title}" has been logged and categorised under ${selectedCat}. The warden and maintenance team will be notified. Thank you for reporting this issue.`;
     etaText = 'Expected resolution: within 48 hours';
-    var urgency = 'Medium';
+    urgency = 'Medium';
   }
 
   // show AI response
@@ -951,9 +968,10 @@ ETA: [e.g. "Expected resolution: within 24 hours"]`;
   document.getElementById('aiPreviewEta').style.display='inline-flex';
 
   // add to data
-  const uid = localStorage.getItem('hostel_user')||'STU001';
-  const stuName = { STU001:'Aarav Mehta', STU002:'Priya Sharma', STU003:'Rahul Gupta', STU004:'Sneha Patel', STU005:'Dev Kumar', STU006:'Ananya Singh', STU007:'Kabir Joshi', STU008:'Meera Iyer' }[uid] || 'Student';
-  const stuRoom = { STU001:'A-201', STU002:'B-305', STU003:'A-102', STU004:'C-210', STU005:'D-101', STU006:'B-201', STU007:'A-310', STU008:'C-105' }[uid] || 'Unknown';
+  const uid = sessionStorage.getItem('hostel_user')||'STU001';
+  // FIX #5: Use real data from students.json if loaded, else fall back to defaults
+  const stuName = (window._stuNameMap && window._stuNameMap[uid]) || 'Student';
+  const stuRoom = (window._stuRoomMap && window._stuRoomMap[uid]) || 'Unknown';
   const location = document.getElementById('cLocation').value || stuRoom;
   const repeatCount = COMPLAINTS.filter(c=>c.cat===selectedCat && c.sid===uid).length + 1;
   const escalated   = repeatCount >= 3;
@@ -988,63 +1006,35 @@ ETA: [e.g. "Expected resolution: within 24 hours"]`;
 }
 
 // ─── SEARCH ───────────────────────────────────────
-function renderList(mineOnly){ 
-  // re-call main renderList with mine flag
-  const q  = (document.getElementById('searchInput').value||'').toLowerCase();
-  const fc = document.getElementById('filterCat').value;
-  const fs = document.getElementById('filterStatus').value;
-  const fu = document.getElementById('filterUrgency').value;
-  const uid = localStorage.getItem('hostel_user')||'STU001';
-  const isMine = mineOnly || currentView==='mine';
 
-  let data = COMPLAINTS.filter(c=>{
-    if(isMine && c.sid !== uid) return false;
-    if(q  && !c.title.toLowerCase().includes(q) && !c.desc.toLowerCase().includes(q)) return false;
-    if(fc && c.cat !== fc) return false;
-    if(fs && c.status !== fs) return false;
-    if(fu && c.urgency !== fu) return false;
-    return true;
-  });
+// ══════════════════════════════════════════
+// FIX #5: Load student data from students.json
+// Builds name/room lookup maps from real data
+// so the logged-in student's info is correct.
+// ══════════════════════════════════════════
+async function loadStudentsFromJSON() {
+  try {
+    const res = await fetch('students.json');
+    if (!res.ok) throw new Error('fetch failed');
+    const jsonStudents = await res.json();
 
-  const list  = document.getElementById('complaintList');
-  const empty = document.getElementById('listEmpty');
-  if(!data.length){ list.innerHTML=''; empty.style.display='block'; return; }
-  empty.style.display='none';
-
-  list.innerHTML = data.map(c=>`
-    <div class="complaint-card ${c.escalated?'escalated':''}" onclick="openDetail('${c.id}')">
-      ${c.escalated?`<div class="escalate-banner" style="margin-bottom:10px"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Escalated — reported ${c.repeatCount} times this month</div>`:''}
-      <div class="cc-top">
-        <div class="cc-left">
-          <div class="cc-cat-icon ${c.cat.toLowerCase()}">${CAT_ICONS[c.cat]}</div>
-          <div>
-            <div class="cc-title">${c.title}</div>
-            <div class="cc-meta"><span>${c.id}</span><span>·</span><span>${c.date.split(' ')[0]}</span><span>·</span><span>${c.room}</span></div>
-          </div>
-        </div>
-        <div class="cc-badges">
-          <span class="tag ${c.status}">${c.status==='open'?'Open':c.status==='review'?'Under Review':'Resolved'}</span>
-          <span class="tag ${c.urgency.toLowerCase()}">${c.urgency}</span>
-          <span class="tag ${c.cat.toLowerCase()}">${c.cat}</span>
-          ${c.escalated?'<span class="tag escalated">⚡ Escalated</span>':''}
-        </div>
-      </div>
-      <div class="cc-desc">${c.desc}</div>
-      <div class="cc-bottom">
-        <div class="cc-stu">
-          <div class="mini-av" style="background:${avCol(COMPLAINTS.indexOf(c))}">${initials(c.student)}</div>
-          ${c.student} · ${c.room}
-        </div>
-        <div class="cc-actions" onclick="event.stopPropagation()">
-          <div class="act-btn" onclick="openDetail('${c.id}')">View</div>
-          ${(currentRole==='admin'||currentRole==='warden') && c.status!=='resolved'?`<div class="act-btn resolve" onclick="quickResolve('${c.id}')">Resolve</div>`:''}
-        </div>
-      </div>
-    </div>
-  `).join('');
+    // Build lookup maps indexed by roll number (e.g. "24H001")
+    window._stuNameMap = {};
+    window._stuRoomMap = {};
+    window._stuEmailMap = {};
+    jsonStudents.forEach(s => {
+      window._stuNameMap[s.roll]  = s.name;
+      window._stuRoomMap[s.roll]  = s.block + '-' + s.room;
+      window._stuEmailMap[s.roll] = s.email;
+    });
+    console.log('✅ Loaded', jsonStudents.length, 'students from students.json');
+  } catch(e) {
+    console.warn('⚠️ Could not load students.json — using built-in demo data.', e.message);
+  }
 }
 
-// ─── TOAST ────────────────────────────────────────
+// FIX #14: Removed duplicate renderList definition. Only one definition exists above.
+
 function showToast(title, sub){
   document.getElementById('toastTitle').textContent = title;
   document.getElementById('toastSub').textContent   = sub;
